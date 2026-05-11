@@ -1,0 +1,18 @@
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getDatabase } from "firebase/database";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBzOPxFrokkKDYFNXHDnmkAnuV9G9nr5rM",
+  authDomain: "bidit-963a8.firebaseapp.com",
+  projectId: "bidit-963a8",
+  storageBucket: "bidit-963a8.firebasestorage.app",
+  messagingSenderId: "489967229542",
+  appId: "1:489967229542:web:2b2ef0cf298b05a4ba2ba7"
+};
+
+const app = initializeApp(firebaseConfig);
+
+export const auth = getAuth(app);
+export const realtimeDb = getDatabase(app);
+
