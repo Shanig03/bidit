@@ -1,22 +1,52 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
-import LoginPage from "./pages/LoginPage";
+import { BrowserRouter, NavLink, Route, Routes } from "react-router-dom";
 import DashboardPage from "./pages/DashboardPage";
+import LoginPage from "./pages/LoginPage";
 import AuctionPage from "./pages/AuctionPage";
+import "./App.css";
+
+const navItems = [
+  { to: "/", label: "Home" },
+  { to: "/login", label: "Login" },
+  { to: "/auction/demo-auction-1", label: "Live Auction" },
+];
 
 function App() {
   return (
     <BrowserRouter>
-      <nav style={{ display: "flex", gap: "12px", padding: "16px" }}>
-        <Link to="/">Dashboard</Link>
-        <Link to="/login">Login</Link>
-        <Link to="/auction/demo-auction-1">Demo Auction</Link>
-      </nav>
+      <div className="app-shell">
+        <header className="topbar">
+          <NavLink to="/" className="brand">
+            <span className="brand-mark">B</span>
+            <span>Bidit</span>
+          </NavLink>
 
-      <Routes>
-        <Route path="/" element={<DashboardPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/auction/:auctionId" element={<AuctionPage />} />
-      </Routes>
+          <nav className="topbar-nav" aria-label="Main navigation">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  isActive ? "nav-link active" : "nav-link"
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+
+          <button className="ghost-btn" type="button">
+            Become a Seller
+          </button>
+        </header>
+
+        <main className="page-content">
+          <Routes>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/auction/:auctionId" element={<AuctionPage />} />
+          </Routes>
+        </main>
+      </div>
     </BrowserRouter>
   );
 }
