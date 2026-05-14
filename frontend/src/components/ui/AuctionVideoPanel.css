@@ -1,0 +1,11 @@
+.avp{padding:0.5rem}.avp-media{height:420px;border-radius:14px;position:relative;background:linear-gradient(135deg,#cdc8c5,#8b8584)}.avp-top{position:absolute;left:0.75rem;top:0.75rem;display:flex;gap:0.5rem}.avp-live{background:#ff3b70;color:#fff;padding:.35rem .75rem;border-radius:999px;font-weight:700}.avp-watch{background:#fff;padding:.35rem .7rem;border-radius:999px}.avp-actions{position:absolute;right:.75rem;top:.75rem;display:flex;gap:.5rem}.avp-actions button{border:0;background:#fff;border-radius:999px;padding:.45rem}.avp-seller{position:absolute;left:.75rem;bottom:.75rem;background:#fff;border-radius:12px;padding:.55rem;display:flex;gap:.5rem;align-items:center}.avp-avatar{font-size:1.7rem}.avp-seller p{margin:0;font-weight:700}.avp-seller span{background:#6a5aff;color:#fff;border-radius:8px;padding:0 .35rem;font-size:.8rem;margin-left:.25rem}.avp h2{margin:.85rem .55rem .35rem;color:#1a2148;font-size:2.9rem}
+
+@media (max-width: 900px){
+  .avp-media{height:300px}
+  .avp h2{font-size:2rem}
+}
+
+@media (max-width: 540px){
+  .avp-media{height:240px}
+  .avp-seller{max-width:85%}
+}

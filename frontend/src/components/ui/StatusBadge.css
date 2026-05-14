@@ -1,0 +1,28 @@
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.status-badge--neutral {
+  color: var(--color-text-muted);
+  background: #f1eef8;
+}
+
+.status-badge--live,
+.status-badge--success {
+  color: var(--color-success);
+  background: var(--color-success-bg);
+}
+
+.status-badge--urgent,
+.status-badge--outbid,
+.status-badge--danger {
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
+}
