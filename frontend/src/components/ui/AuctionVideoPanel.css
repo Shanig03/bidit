@@ -9,3 +9,60 @@
   .avp-media{height:240px}
   .avp-seller{max-width:85%}
 }
+/* Custom formatting blocks added to control the streaming frames seamlessly */
+.avp-video-wrapper, .avp-connect-overlay {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.avp-video-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 14px;
+}
+
+.avp-placeholder-fallback p {
+  color: #fff;
+  font-weight: 600;
+  text-align: center;
+  padding: 1rem;
+}
+
+.avp-connect-btn {
+  background: #6a4df8;
+  color: #fff;
+  border: 0;
+  border-radius: 12px;
+  padding: 0.85rem 1.5rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(106, 77, 248, 0.4);
+  transition: transform 0.1s ease;
+}
+
+.avp-connect-btn:hover {
+  transform: scale(1.03);
+}
+/* Custom resolution picker alignment specs */
+.avp-res-dropdown {
+  background: #fff;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-weight: 600;
+  color: #1a2148;
+  font-size: 0.85rem;
+  cursor: pointer;
+  outline: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: background 0.15s ease;
+}
+
+.avp-res-dropdown:hover {
+  background: #f3f1ff;
+}
