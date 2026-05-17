@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Navbar from '../components/ui/Navbar';
 import PageContainer from '../components/ui/PageContainer';
@@ -7,77 +6,13 @@ import BidPanel from '../components/ui/BidPanel';
 import RecentBids from '../components/ui/RecentBids';
 import LiveChat from '../components/ui/LiveChat';
 import ProductDescription from '../components/ui/ProductDescription';
-import { getAuctionById, placeBid } from '../api/auctionsApi';
-import { getBidsForAuction } from '../data/mockBids';
-import { getChatMessagesForAuction } from '../data/mockChatMessages';
+import { useAuctionDetails } from '../hooks/useAuctionDetails';
 import './AuctionDetailsPage.css';
-
-function mapApiAuctionToPageAuction(apiAuction) {
-  return {
-    id: apiAuction.auctionId,
-    auctionId: apiAuction.auctionId,
-
-    title: apiAuction.title,
-    name: apiAuction.title,
-    description: apiAuction.description,
-    category: apiAuction.category,
-
-    startingPrice: apiAuction.startingPrice,
-    currentBid: apiAuction.currentPrice,
-    currentPrice: apiAuction.currentPrice,
-
-    status: apiAuction.status,
-    endsAt: apiAuction.endsAt,
-    startsAt: apiAuction.startsAt,
-    createdAt: apiAuction.createdAt,
-
-    bidCount: apiAuction.bidCount || 0,
-    watchers: apiAuction.watchers || 0,
-
-    sellerId: apiAuction.sellerId,
-    highestBidderId: apiAuction.highestBidderId,
-    highestBidderEmail: apiAuction.highestBidderEmail,
-
-    imageUrl: apiAuction.imageUrl,
-    agoraChannelName: apiAuction.agoraChannelName,
-  };
-}
 
 function AuctionDetailsPage() {
   const { id, auctionId } = useParams();
   const selectedAuctionId = auctionId || id;
-
-  const [auction, setAuction] = useState(null);
-  const [bids, setBids] = useState([]);
-  const [chat, setChat] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  useEffect(() => {
-    async function loadAuction() {
-      try {
-        setIsLoading(true);
-        setErrorMessage('');
-
-        const apiAuction = await getAuctionById(selectedAuctionId);
-        console.log('selectedAuctionId:', selectedAuctionId);
-        console.log('apiAuction from API:', apiAuction);
-        const mappedAuction = mapApiAuctionToPageAuction(apiAuction);
-
-        setAuction(mappedAuction);
-        setBids(getBidsForAuction(mappedAuction.id));
-        setChat(getChatMessagesForAuction(mappedAuction.id));
-      } catch (error) {
-        setErrorMessage(error.message || 'Failed to load auction.');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    if (selectedAuctionId) {
-      loadAuction();
-    }
-  }, [selectedAuctionId]);
+  const { auction, bids, chat, isLoading, errorMessage, handlePlaceBid } = useAuctionDetails(selectedAuctionId);
 
   if (isLoading) {
     return (
@@ -112,19 +47,6 @@ function AuctionDetailsPage() {
     );
   }
 
-  async function handlePlaceBid(amount) {
-    await placeBid(selectedAuctionId, {
-      bidderId: 'firebase-buyer-123',
-      bidderEmail: 'buyer@example.com',
-      amount,
-    });
-
-    const updatedAuction = await getAuctionById(selectedAuctionId);
-    const mappedAuction = mapApiAuctionToPageAuction(updatedAuction);
-
-    setAuction(mappedAuction);
-  }
-
   return (
     <>
       <Navbar />
@@ -137,12 +59,7 @@ function AuctionDetailsPage() {
           </div>
 
           <div className="ad-right">
-            <BidPanel
-              currentBid={auction.currentBid}
-              watchers={auction.watchers}
-              auction={auction}
-              onPlaceBid={handlePlaceBid}
-            />
+            <BidPanel currentBid={auction.currentBid} watchers={auction.watchers} auction={auction} onPlaceBid={handlePlaceBid} />
             <RecentBids bids={bids} />
           </div>
         </div>

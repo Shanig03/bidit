@@ -46,7 +46,6 @@ function GoLivePage() {
   // 1. Add state tracking for the stream quality setting selection
   const [streamQuality, setStreamQuality] = useState('720p Standard Definition');
   
-  const errorMessage = ''; // Adjusted to clean unused variable declarations for Vite builds
   const [serverError, setServerError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);

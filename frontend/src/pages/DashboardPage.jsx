@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/ui/Navbar';
 import PageContainer from '../components/ui/PageContainer';
@@ -7,8 +6,7 @@ import DashboardTabs from '../components/ui/DashboardTabs';
 import DashboardLiveStreamItem from '../components/ui/DashboardLiveStreamItem';
 import DashboardBidItem from '../components/ui/DashboardBidItem';
 import DashboardWonItem from '../components/ui/DashboardWonItem';
-import { getDashboardItems } from '../data/mockDashboard';
-import { getAuctions } from '../api/auctionsApi';
+import { useDashboard } from '../hooks/useDashboard';
 import './DashboardPage.css';
 
 const tabs = [
@@ -17,75 +15,22 @@ const tabs = [
   { id: 'won', label: 'Won Auctions' },
 ];
 
-function mapAuctionToDashboardItem(auction) {
-  return {
-    id: auction.auctionId,
-    title: auction.title,
-    description: auction.description,
-    status: auction.status,
-    currentBid: auction.currentPrice,
-    currentPrice: auction.currentPrice,
-    startingPrice: auction.startingPrice,
-    bids: auction.bidCount || 0,
-    bidCount: auction.bidCount || 0,
-    endsAt: auction.endsAt,
-    category: auction.category,
-    imageUrl: auction.imageUrl,
-    sellerId: auction.sellerId,
-  };
-}
-
 function DashboardPage() {
   const navigate = useNavigate();
-
-  const [activeTab, setActiveTab] = useState('live');
-  const [liveStreams, setLiveStreams] = useState([]);
-  const [isLoadingLiveAuctions, setIsLoadingLiveAuctions] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  const myBids = getDashboardItems('myBids');
-  const wonAuctions = getDashboardItems('wonAuctions');
-
-  useEffect(() => {
-    async function loadLiveAuctions() {
-      try {
-        setIsLoadingLiveAuctions(true);
-        setErrorMessage('');
-
-        const auctions = await getAuctions();
-        const mappedAuctions = auctions.map(mapAuctionToDashboardItem);
-
-        setLiveStreams(mappedAuctions);
-      } catch (error) {
-        setErrorMessage(error.message || 'Failed to load auctions');
-      } finally {
-        setIsLoadingLiveAuctions(false);
-      }
-    }
-
-    loadLiveAuctions();
-  }, []);
+  const { activeTab, setActiveTab, liveStreams, isLoadingLiveAuctions, errorMessage, myBids, wonAuctions } = useDashboard();
 
   function handleCreateAuction() {
     navigate('/create-auction');
   }
 
-  function handleViewAuction(auctionId) {
-    navigate(`/auction/${auctionId}`);
+  function handleViewAuction(currentAuctionId) {
+    navigate(`/auction/${currentAuctionId}`);
   }
 
   function renderLiveAuctions() {
-    if (isLoadingLiveAuctions) {
-      return <p className="dashboard-message">Loading live auctions...</p>;
-    }
-
-    if (errorMessage) {
-      return <p className="dashboard-message dashboard-error">{errorMessage}</p>;
-    }
-
-    if (liveStreams.length === 0) {
-      return <p className="dashboard-message">No live auctions yet.</p>;
-    }
+    if (isLoadingLiveAuctions) return <p className="dashboard-message">Loading live auctions...</p>;
+    if (errorMessage) return <p className="dashboard-message dashboard-error">{errorMessage}</p>;
+    if (liveStreams.length === 0) return <p className="dashboard-message">No live auctions yet.</p>;
 
     return liveStreams.map((item, index) => (
       <DashboardLiveStreamItem
@@ -122,20 +67,8 @@ function DashboardPage() {
             {activeTab === 'live'
               ? renderLiveAuctions()
               : activeTab === 'bids'
-                ? myBids.map((item, index) => (
-                    <DashboardBidItem
-                      key={item.id}
-                      item={item}
-                      imageVariant={index + 1}
-                    />
-                  ))
-                : wonAuctions.map((item, index) => (
-                    <DashboardWonItem
-                      key={item.id}
-                      item={item}
-                      imageVariant={index + 1}
-                    />
-                  ))}
+                ? myBids.map((item, index) => <DashboardBidItem key={item.id} item={item} imageVariant={index + 1} />)
+                : wonAuctions.map((item, index) => <DashboardWonItem key={item.id} item={item} imageVariant={index + 1} />)}
           </div>
         </section>
       </PageContainer>
