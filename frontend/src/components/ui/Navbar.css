@@ -101,3 +101,10 @@
   .navbar__actions > a,
   .navbar__actions > a button { width: 100%; }
 }
+
+
+.navbar__user{display:inline-flex;align-items:center;gap:.55rem;border:0;background:transparent;padding:.2rem .4rem;border-radius:999px;color:var(--color-text);font-weight:600;}
+.navbar__bell{font-size:1.1rem;}
+.navbar__avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;}
+.navbar__avatar--fallback{display:grid;place-items:center;background:#ede8ff;color:#4523b9;font-weight:700;}
+@media (max-width:640px){.navbar__user{width:100%;justify-content:center;}}
