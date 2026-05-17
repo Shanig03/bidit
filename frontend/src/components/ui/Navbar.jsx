@@ -1,6 +1,7 @@
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import './Navbar.css';
 import Button from './Button';
+import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
   { label: 'Home', to: '/' },
@@ -8,8 +9,14 @@ const navItems = [
   { label: 'Go Live', to: '/go-live' },
   { label: 'Dashboard', to: '/dashboard' },
 ];
+const DEV_SHOW_PROFILE_LINK = true;
+// Temporary development-only profile access. Remove or disable when authentication is connected.
 
 function Navbar() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
+
   return (
     <header className="navbar-wrap">
       <nav className="navbar" aria-label="Main navigation">
@@ -31,12 +38,34 @@ function Navbar() {
         </div>
 
         <div className="navbar__actions">
-          <Link to="/login">
-            <Button variant="secondary">Log In</Button>
-          </Link>
-          <Link to="/signup">
-            <Button>Sign Up</Button>
-          </Link>
+          {!user ? (
+            <>
+              {DEV_SHOW_PROFILE_LINK ? (
+                <Link className="navbar__dev-profile-link" to="/profile">
+                  Profile
+                </Link>
+              ) : null}
+              <Link to="/login">
+                <Button variant="secondary">Log In</Button>
+              </Link>
+              <Link to="/signup">
+                <Button>Sign Up</Button>
+              </Link>
+            </>
+          ) : (
+            <button type="button" className="navbar__user" onClick={() => navigate('/profile')}>
+              <span className="navbar__bell" aria-hidden="true">🔔</span>
+              {user.photoURL ? (
+                <img src={user.photoURL} alt={displayName} className="navbar__avatar" />
+              ) : (
+                <span className="navbar__avatar navbar__avatar--fallback" aria-hidden="true">
+                  {displayName.slice(0, 1).toUpperCase()}
+                </span>
+              )}
+              <span className="navbar__user-name">{displayName}</span>
+              <span aria-hidden="true">▾</span>
+            </button>
+          )}
         </div>
       </nav>
     </header>
