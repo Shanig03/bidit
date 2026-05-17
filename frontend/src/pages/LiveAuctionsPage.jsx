@@ -5,7 +5,6 @@ import StatusBadge from '../components/ui/StatusBadge';
 import CategoryChip from '../components/ui/CategoryChip';
 import AuctionCard from '../components/ui/AuctionCard';
 import { getAuctions } from '../api/auctionsApi';
-import { getAuctions } from '../api/auctionsApi';
 import './LiveAuctionsPage.css';
 
 const categories = ['All', 'Photography', 'Fashion', 'Music', 'Collectibles', 'Books', 'Electronics'];
@@ -121,16 +120,6 @@ function LiveAuctionsPage() {
             ))}
           </div>
         </section>
-
-        {/* 4. Handle State Rendering Gating */}
-        {isLoading && <p style={{ padding: '2rem', textAlign: 'center' }}>Syncing cloud records...</p>}
-        {error && <p style={{ padding: '2rem', color: 'red', textAlign: 'center' }}>{error}</p>}
-        
-        {!isLoading && !error && auctions.length === 0 && (
-          <p style={{ padding: '3rem', textAlign: 'center', color: '#5a6388' }}>
-            No live streams right now. Go to the "Go Live" tab to launch one!
-          </p>
-        )}
 
         {isLoading && (
           <p className="live-message">Loading live auctions...</p>
