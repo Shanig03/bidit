@@ -1,0 +1,36 @@
+:root {
+  /* Surface */
+  --color-bg: #f8f7fc;
+  --color-surface: #ffffff;
+  --color-surface-soft: #fcfbff;
+  --color-border: #ebe7f5;
+
+  /* Typography */
+  --color-text: #1b2340;
+  --color-text-muted: #6d7390;
+
+  /* Brand / actions */
+  --gradient-primary: linear-gradient(135deg, #7f5cff 0%, #ec4899 100%);
+  --gradient-urgent: linear-gradient(135deg, #fb923c 0%, #f43f5e 100%);
+
+  /* State colors */
+  --color-success: #16a34a;
+  --color-success-bg: #eaf8ef;
+  --color-danger: #dc2626;
+  --color-danger-bg: #feeff2;
+  --color-warning: #ea580c;
+  --color-warning-bg: #fff2e8;
+
+  /* Effects */
+  --shadow-soft: 0 8px 24px rgba(27, 35, 64, 0.08);
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+
+  /* Spacing */
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+}

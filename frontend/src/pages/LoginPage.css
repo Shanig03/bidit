@@ -1,0 +1,33 @@
+.login-page { min-height: calc(100vh - 110px); display: grid; place-items: center; }
+.login-shell { width: 100%; max-width: 540px; text-align: center; }
+.login-brand { font-size: 2.8rem; margin: 0 0 0.75rem; font-weight: 800; color: #5948ff; }
+.login-shell h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.3rem); color: #121a3f; }
+.login-subtitle { margin: 0.65rem 0 1.6rem; color: var(--color-text-muted); font-size: 1.2rem; }
+.login-card { background: var(--color-surface); border: 1px solid #eadff7; border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); padding: 1.8rem; text-align: left; }
+.login-card label { display: block; font-size: 1.05rem; font-weight: 700; margin: 0 0 0.6rem; color: #161f47; }
+.login-input-wrap { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 0.7rem 0.9rem; display: flex; align-items: center; gap: 0.55rem; margin-bottom: 1rem; }
+.login-input-wrap input { border: 0; outline: 0; width: 100%; font-size: 1.1rem; background: transparent; color: var(--color-text); }
+.login-eye { background: transparent; border: 0; cursor: pointer; }
+.login-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.login-check { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 500 !important; margin: 0 !important; }
+.login-row a { color: #5a4bff; font-weight: 700; }
+.login-submit { width: 100%; font-size: 1.8rem; padding: 0.7rem 1rem; border-radius: 18px; }
+.login-separator { display: grid; place-items: center; margin: 1.1rem 0; position: relative; }
+.login-separator::before { content: ''; position: absolute; left: 0; right: 0; height: 1px; background: var(--color-border); }
+.login-separator span { position: relative; z-index: 1; padding: 0 0.7rem; background: var(--color-surface); color: var(--color-text-muted); font-weight: 700; }
+.login-google { width: 100%; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 0.8rem 0.9rem; background: #fff; font-size: 1.05rem; font-weight: 700; color: #253053; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+.login-google span { color: #ea4335; font-size: 1.3rem; font-weight: 800; }
+.login-signup { text-align: center; margin: 1rem 0 0; color: var(--color-text-muted); }
+.login-signup a, .login-terms a { color: #5b4cff; font-weight: 700; }
+.login-terms { text-align: center; color: var(--color-text-muted); margin: 1rem 0 0; }
+
+@media (max-width: 680px) {
+  .login-card { padding: 1rem; }
+  .login-submit { font-size: 1.2rem; }
+}
+
+@media (max-width: 480px) {
+  .login-page { min-height: auto; }
+  .login-shell { max-width: 100%; }
+  .login-row { flex-direction: column; align-items: flex-start; gap: 0.45rem; }
+}
