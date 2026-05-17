@@ -1,6 +1,6 @@
-import StatusBadge from '../ui/StatusBadge';
-import CategoryChip from '../ui/CategoryChip';
-import AuctionCard from '../ui/AuctionCard';
+import StatusBadge from './ui/StatusBadge';
+import CategoryChip from './ui/CategoryChip';
+import AuctionCard from './ui/AuctionCard';
 import './LiveAuctionsContent.css';
 
 export default function LiveAuctionsContent({ auctions, selectedCategory, setSelectedCategory, searchTerm, setSearchTerm, isLoading, errorMessage, filteredAuctions, categories }) {

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import Button from '../ui/Button';
-import StatusBadge from '../ui/StatusBadge';
+import Button from './ui/Button';
+import StatusBadge from './ui/StatusBadge';
 import './HomePageContent.css';
 
 const trustItems = ['Real-time bidding', 'Secure payments', 'Trusted community'];

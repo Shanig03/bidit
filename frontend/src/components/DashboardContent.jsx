@@ -1,8 +1,8 @@
-import Button from '../ui/Button';
-import DashboardTabs from '../ui/DashboardTabs';
-import DashboardLiveStreamItem from '../ui/DashboardLiveStreamItem';
-import DashboardBidItem from '../ui/DashboardBidItem';
-import DashboardWonItem from '../ui/DashboardWonItem';
+import Button from './ui/Button';
+import DashboardTabs from './ui/DashboardTabs';
+import DashboardLiveStreamItem from './ui/DashboardLiveStreamItem';
+import DashboardBidItem from './ui/DashboardBidItem';
+import DashboardWonItem from './ui/DashboardWonItem';
 import './DashboardContent.css';
 
 const tabs = [

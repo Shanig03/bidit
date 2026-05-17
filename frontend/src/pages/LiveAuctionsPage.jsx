@@ -1,6 +1,6 @@
 import Navbar from '../components/ui/Navbar';
 import PageContainer from '../components/ui/PageContainer';
-import LiveAuctionsContent from '../components/pages/LiveAuctionsContent';
+import LiveAuctionsContent from '../components/LiveAuctionsContent';
 import { LIVE_AUCTION_CATEGORIES, useLiveAuctions } from '../hooks/useLiveAuctions';
 
 function LiveAuctionsPage() {

@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/ui/Navbar';
 import PageContainer from '../components/ui/PageContainer';
-import DashboardContent from '../components/pages/DashboardContent';
+import DashboardContent from '../components/DashboardContent';
 import { useDashboard } from '../hooks/useDashboard';
 
 function DashboardPage() {
