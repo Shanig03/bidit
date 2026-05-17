@@ -1,9 +1,10 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/ui/Navbar';
 import PageContainer from '../components/ui/PageContainer';
 import Button from '../components/ui/Button';
 import StatusBadge from '../components/ui/StatusBadge';
-import { getTrendingAuctions } from '../data/mockAuctions';
+import { getAuctions } from '../api/auctionsApi';
 import './HomePage.css';
 
 const trustItems = ['Real-time bidding', 'Secure payments', 'Trusted community'];
@@ -21,8 +22,49 @@ const bottomStats = [
   { title: '150+ Countries', subtitle: 'Global marketplace' },
 ];
 
+function mapAuctionToHomeAuction(auction) {
+  return {
+    id: auction.auctionId,
+    auctionId: auction.auctionId,
+    title: auction.title,
+    description: auction.description,
+    category: auction.category || 'General',
+    seller: auction.sellerId || 'Bidit seller',
+    sellerId: auction.sellerId,
+    currentBid: auction.currentPrice,
+    currentPrice: auction.currentPrice,
+    startingPrice: auction.startingPrice,
+    bidCount: auction.bidCount || 0,
+    status: auction.status,
+    endsAt: auction.endsAt,
+    imageUrl: auction.imageUrl,
+  };
+}
+
 function HomePage() {
-  const trending = getTrendingAuctions().slice(0, 3);
+  const [trending, setTrending] = useState([]);
+  const [isLoadingTrending, setIsLoadingTrending] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    async function loadTrendingAuctions() {
+      try {
+        setIsLoadingTrending(true);
+        setErrorMessage('');
+
+        const apiAuctions = await getAuctions();
+        const mappedAuctions = apiAuctions.map(mapAuctionToHomeAuction);
+
+        setTrending(mappedAuctions.slice(0, 3));
+      } catch (error) {
+        setErrorMessage(error.message || 'Failed to load trending auctions.');
+      } finally {
+        setIsLoadingTrending(false);
+      }
+    }
+
+    loadTrendingAuctions();
+  }, []);
 
   return (
     <>
@@ -30,11 +72,13 @@ function HomePage() {
       <PageContainer className="home-page">
         <section className="home-hero card">
           <StatusBadge tone="neutral">Live Video Auctions</StatusBadge>
+
           <h1 className="home-title">
             Bid <span>live.</span>
             <br />
             Win fast.
           </h1>
+
           <p className="home-subtitle">
             Watch sellers showcase amazing items in live video streams. Place real-time bids and win incredible
             products from around the world.
@@ -44,6 +88,7 @@ function HomePage() {
             <Link to="/auctions">
               <Button>Watch Live Auctions</Button>
             </Link>
+
             <Link to="/go-live">
               <Button variant="secondary">Start Streaming</Button>
             </Link>
@@ -76,40 +121,62 @@ function HomePage() {
               </h2>
               <p>Popular live auctions happening right now</p>
             </div>
+
             <Link to="/auctions">View all</Link>
           </div>
 
-          <div className="home-auction-grid">
-            {trending.map((auction, index) => (
-              <article className="home-auction-card" key={auction.id}>
-                <div className={`home-auction-image home-auction-image--${index + 1}`} />
-                <div className="home-auction-body">
-                  <p className="home-auction-category">{auction.category}</p>
-                  <h3>{auction.title}</h3>
-                  <p className="home-auction-meta">Hosted by {auction.seller}</p>
-                  <div className="home-auction-bid">
-                    <div>
-                      <span>Current bid</span>
-                      <strong>${auction.currentBid}</strong>
+          {isLoadingTrending && (
+            <p className="home-trending-message">Loading trending auctions...</p>
+          )}
+
+          {errorMessage && (
+            <p className="home-trending-message" style={{ color: 'red' }}>
+              {errorMessage}
+            </p>
+          )}
+
+          {!isLoadingTrending && !errorMessage && trending.length === 0 && (
+            <p className="home-trending-message">No live auctions yet.</p>
+          )}
+
+          {!isLoadingTrending && !errorMessage && trending.length > 0 && (
+            <div className="home-auction-grid">
+              {trending.map((auction, index) => (
+                <article className="home-auction-card" key={auction.id}>
+                  <div className={`home-auction-image home-auction-image--${index + 1}`} />
+
+                  <div className="home-auction-body">
+                    <p className="home-auction-category">{auction.category}</p>
+
+                    <h3>{auction.title}</h3>
+
+                    <p className="home-auction-meta">Hosted by {auction.seller}</p>
+
+                    <div className="home-auction-bid">
+                      <div>
+                        <span>Current bid</span>
+                        <strong>${auction.currentBid}</strong>
+                      </div>
+
+                      <Link to={`/auction/${auction.id}`}>
+                        <Button>Join Live Auction</Button>
+                      </Link>
                     </div>
-                    <Link to={`/auction/${auction.id}`}>
-                      <Button>Join Live Auction</Button>
-                    </Link>
                   </div>
-                </div>
-              </article>
-            ))}
-          </div>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
 
-        <section className="home-stats card">
+        {/* <section className="home-stats card">
           {bottomStats.map((stat) => (
             <div key={stat.title}>
               <h4>{stat.title}</h4>
               <p>{stat.subtitle}</p>
             </div>
           ))}
-        </section>
+        </section> */}
       </PageContainer>
     </>
   );

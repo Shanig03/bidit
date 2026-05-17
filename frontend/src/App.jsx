@@ -6,10 +6,13 @@ import LiveAuctionsPage from './pages/LiveAuctionsPage';
 import AuctionDetailsPage from './pages/AuctionDetailsPage';
 import GoLivePage from './pages/GoLivePage';
 import DashboardPage from './pages/DashboardPage';
+import ProfilePage from './pages/ProfilePage';
+import { AuthProvider } from './context/AuthContext';
 
 function App() {
   return (
-    <BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -18,8 +21,10 @@ function App() {
         <Route path="/auction/:id" element={<AuctionDetailsPage />} />
         <Route path="/go-live" element={<GoLivePage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Routes>
     </BrowserRouter>
+    </AuthProvider>
   );
 }
 
