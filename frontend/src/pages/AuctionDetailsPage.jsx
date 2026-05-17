@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Navbar from '../components/ui/Navbar';
 import PageContainer from '../components/ui/PageContainer';
-// import AuctionVideoPanel from '../components/ui/AuctionVideoPanel';
-import AuctionRoom from "../components/ui/AuctionRoom";
+import AuctionVideoPanel from '../components/ui/AuctionVideoPanel';
 import BidPanel from '../components/ui/BidPanel';
 import RecentBids from '../components/ui/RecentBids';
 import LiveChat from '../components/ui/LiveChat';
@@ -132,8 +131,7 @@ function AuctionDetailsPage() {
       <PageContainer className="auction-details-page">
         <div className="ad-grid">
           <div className="ad-left">
-            {/* <AuctionVideoPanel auction={auction} /> */}
-            <AuctionRoom auction={auction}/>
+            <AuctionVideoPanel auction={auction} />
             <LiveChat messages={chat} />
             <ProductDescription auction={auction} />
           </div>

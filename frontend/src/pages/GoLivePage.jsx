@@ -18,6 +18,12 @@ const durationOptions = [
   { label: '3 hours', hours: 3 },
 ];
 
+// Configuration maps to translate clean UI labels to explicit Agora profile strings
+const resolutionMap = {
+  '720p Standard Definition': '720p_1',
+  '1080p High Definition': '1080p_1'
+};
+
 function calculateEndsAt(durationLabel) {
   const selectedDuration = durationOptions.find((duration) => duration.label === durationLabel);
   const hoursToAdd = selectedDuration ? selectedDuration.hours : 24;
@@ -36,44 +42,55 @@ function GoLivePage() {
   const [category, setCategory] = useState('Photography');
   const [startingPrice, setStartingPrice] = useState('');
   const [duration, setDuration] = useState('24 hours');
-  const [errorMessage, setErrorMessage] = useState('');
+  
+  // 1. Add state tracking for the stream quality setting selection
+  const [streamQuality, setStreamQuality] = useState('720p Standard Definition');
+  
+  const errorMessage = ''; // Adjusted to clean unused variable declarations for Vite builds
+  const [serverError, setServerError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleStartAuction(event) {
     event.preventDefault();
 
-    setErrorMessage('');
+    setServerError('');
     setSuccessMessage('');
 
     if (!title.trim()) {
-      setErrorMessage('Product title is required.');
+      setServerError('Product title is required.');
       return;
     }
 
     if (!startingPrice || Number(startingPrice) <= 0) {
-      setErrorMessage('Starting price must be greater than 0.');
+      setServerError('Starting price must be greater than 0.');
       return;
     }
 
     try {
       setIsSubmitting(true);
 
+      // Map the user-friendly label selection to the technical Agora string identifier
+      const selectedAgoraProfile = resolutionMap[streamQuality] || '720p_1';
+
+      // 2. Forward the chosen stream profile parameter out to your AWS Backend API
       const result = await createAuction({
-        sellerId: 'firebase-user-123',
+        sellerId: 'firebase-user-123', // Swap out for real Firebase user session variable later
         title: title.trim(),
         description: description.trim(),
         category,
         startingPrice: Number(startingPrice),
         endsAt: calculateEndsAt(duration),
         imageUrl: '',
+        agoraChannelName: `auction-${Date.now()}`, // Explicitly generates a unique channel name string
+        videoProfile: selectedAgoraProfile          // Saves default streaming quality configuration to DynamoDB
       });
 
       setSuccessMessage('Auction created successfully.');
 
       navigate(`/auction/${result.auction.auctionId}`);
     } catch (error) {
-      setErrorMessage(error.message || 'Failed to create auction.');
+      setServerError(error.message || 'Failed to create auction.');
     } finally {
       setIsSubmitting(false);
     }
@@ -100,12 +117,17 @@ function GoLivePage() {
                 <p>Your camera and microphone will be activated when you start the auction</p>
               </div>
             </div>
+            
             <div className="stream-setup__meta">
-              <p>
-                Stream Quality: <strong>1080p HD</strong>
-              </p>
-              <p>
-                Estimated Reach: <strong>Global Audience</strong>
+              {/* 3. Drop in your SelectField primitive directly inside the setup card metadata box */}
+              <SelectField
+                label="Stream Quality Profile"
+                options={['720p Standard Definition', '1080p High Definition']}
+                value={streamQuality}
+                onChange={(event) => setStreamQuality(event.target.value)}
+              />
+              <p style={{ marginTop: '0.4rem', fontSize: '0.9rem', color: '#5a6388' }}>
+                Estimated Reach: <strong>Global Audience via Agora Edge</strong>
               </p>
             </div>
           </div>
@@ -157,8 +179,8 @@ function GoLivePage() {
             <UploadBox />
           </div>
 
-          {errorMessage && <p className="go-live-error">{errorMessage}</p>}
-          {successMessage && <p className="go-live-success">{successMessage}</p>}
+          {serverError && <p className="go-live-error" style={{ color: 'red', fontWeight: 'bold' }}>{serverError}</p>}
+          {successMessage && <p className="go-live-success" style={{ color: 'green', fontWeight: 'bold' }}>{successMessage}</p>}
 
           <div className="go-live-actions">
             <Button
