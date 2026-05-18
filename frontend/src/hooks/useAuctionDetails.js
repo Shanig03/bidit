@@ -4,6 +4,8 @@ import { useParams } from 'react-router-dom';
 import { getAuctionById, placeBid } from '../api/auctionsApi'; 
 import { getBidsForAuction } from '../data/mockBids';
 import { getChatMessagesForAuction } from '../data/mockChatMessages';
+import { useAuth } from '../context/AuthContext';
+
 
 function mapApiAuctionToPageAuction(apiAuction) {
   return {
@@ -33,7 +35,8 @@ function mapApiAuctionToPageAuction(apiAuction) {
 export function useAuctionDetails() {
   const { id, auctionId } = useParams();
   const selectedAuctionId = auctionId || id;
-
+  const { user } = useAuth(); 
+  const currentUserId = user?.uid;
   const [auction, setAuction] = useState(null);
   const [bids, setBids] = useState([]);
   const [chat, setChat] = useState([]);
@@ -80,6 +83,7 @@ export function useAuctionDetails() {
 
   return {
     auction,
+    currentUserId,
     bids,
     chat,
     isLoading,
