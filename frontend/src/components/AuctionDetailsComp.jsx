@@ -46,7 +46,7 @@ export default function AuctionDetailsComp() {
       <div className="ad-grid">
         <div className="ad-left">
           <AuctionVideoPanel auction={auction} />
-          <LiveChat messages={chat} />
+          <LiveChat auctionId={auction.auctionId} />
           <ProductDescription auction={auction} />
         </div>
 
