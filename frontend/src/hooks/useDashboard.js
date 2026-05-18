@@ -1,4 +1,4 @@
-// src/hooks/useDashboard.js
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuctions } from '../api/auctionsApi'; 

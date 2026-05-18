@@ -1,4 +1,4 @@
-// src/hooks/useLiveAuctions.js
+
 import { useEffect, useState } from 'react';
 import { getAuctions } from '../api/auctionsApi'; 
 

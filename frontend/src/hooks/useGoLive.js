@@ -1,4 +1,4 @@
-// src/hooks/useGoLive.js
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createAuction } from '../api/auctionsApi'; 
