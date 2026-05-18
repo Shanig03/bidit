@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import Navbar from '../components/ui/Navbar';
-import PageContainer from '../components/ui/PageContainer';
-import StatusBadge from '../components/ui/StatusBadge';
-import CategoryChip from '../components/ui/CategoryChip';
-import AuctionCard from '../components/ui/AuctionCard';
+import Navbar from '../components/Navbar';
+import PageContainer from '../components/PageContainer';
+import StatusBadge from '../components/StatusBadge';
+import CategoryChip from '../components/CategoryChip';
+import AuctionCard from '../components/AuctionCard';
 import { getAuctions } from '../api/auctionsApi';
 import './LiveAuctionsPage.css';
 

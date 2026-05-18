@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/ui/Navbar';
-import PageContainer from '../components/ui/PageContainer';
-import StatusBadge from '../components/ui/StatusBadge';
-import Button from '../components/ui/Button';
-import FormInput from '../components/ui/FormInput';
-import SelectField from '../components/ui/SelectField';
-import TextareaField from '../components/ui/TextareaField';
-import UploadBox from '../components/ui/UploadBox';
+import Navbar from '../components/Navbar';
+import PageContainer from '../components/PageContainer';
+import StatusBadge from '../components/StatusBadge';
+import Button from '../components/Button';
+import FormInput from '../components/FormInput';
+import SelectField from '../components/SelectField';
+import TextareaField from '../components/TextareaField';
+import UploadBox from '../components/UploadBox';
 import { createAuction } from '../api/auctionsApi';
 import './GoLivePage.css';
 

@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes, Outlet } from 'react-router-dom';
 //  REPLACE WITH THESE TWO SEPARATE IMPORTS:
 import AgoraRTC from "agora-rtc-sdk-ng"; 
 import { AgoraRTCProvider } from "agora-rtc-react";
+import Navbar from './components/Navbar';
 
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -28,6 +29,7 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+      <Navbar />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />

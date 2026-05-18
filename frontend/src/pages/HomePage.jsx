@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Navbar from '../components/ui/Navbar';
-import PageContainer from '../components/ui/PageContainer';
-import Button from '../components/ui/Button';
-import StatusBadge from '../components/ui/StatusBadge';
+import Navbar from '../components/Navbar';
+import PageContainer from '../components/PageContainer';
+import Button from '../components/Button';
+import StatusBadge from '../components/StatusBadge';
 import { getAuctions } from '../api/auctionsApi';
 import './HomePage.css';
 
