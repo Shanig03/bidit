@@ -1,130 +1,120 @@
-import PageContainer from './PageContainer';
-import StatusBadge from './StatusBadge';
-import Button from './Button';
-import FormInput from './FormInput';
-import SelectField from './SelectField';
-import TextareaField from './TextareaField';
-import UploadBox from './UploadBox';
-import { useGoLive, durationOptions } from '../hooks/useGoLive';
+import { durationOptions } from '../hooks/useGoLive';
 import './GoLiveComp.css';
 
-export default function GoLiveComp() {
+export default function GoLiveComp(props) {
   const {
     title, setTitle,
     description, setDescription,
     category, setCategory,
     startingPrice, setStartingPrice,
     duration, setDuration,
+    startTime, setStartTime,
     streamQuality, setStreamQuality,
-    serverError,
-    successMessage,
-    isSubmitting,
-    handleStartAuction,
-    handleCancel
-  } = useGoLive();
+    serverError, successMessage, isSubmitting,
+    handleStartAuction, handleCancel
+  } = props;
 
   return (
-    <PageContainer className="go-live-page">
+    <div className="go-live-page">
       <header className="go-live-header">
-        <StatusBadge tone="neutral">Start Live Streaming</StatusBadge>
-        <h1>
-          Go <span>Live</span>
-        </h1>
-        <p>Set up your live video auction and start showcasing your product to bidders worldwide</p>
+        <h1>Schedule a <span>Live Auction</span></h1>
+        <p>Set up your product details and stream settings.</p>
       </header>
 
       <form className="go-live-card card" onSubmit={handleStartAuction}>
+        {serverError && <p className="error-message">{serverError}</p>}
+        {successMessage && <p className="success-message">{successMessage}</p>}
+
+        <div className="upload-wrap">
+          <label className="upload-title">Product Title</label>
+          <input 
+            type="text" 
+            value={title} 
+            onChange={(e) => setTitle(e.target.value)} 
+            placeholder="e.g. Vintage Camera"
+            required 
+          />
+        </div>
+
+        <div className="upload-wrap">
+          <label className="upload-title">Description</label>
+          <textarea 
+            value={description} 
+            onChange={(e) => setDescription(e.target.value)}
+            rows="3"
+            placeholder="Describe your item..."
+          />
+        </div>
+
+        <div className="go-live-grid-2">
+          <div className="upload-wrap">
+            <label className="upload-title">Starting Price ($)</label>
+            <input 
+              type="number" 
+              value={startingPrice} 
+              onChange={(e) => setStartingPrice(e.target.value)} 
+              min="1"
+              required 
+            />
+          </div>
+
+          <div className="upload-wrap">
+            <label className="upload-title">Category</label>
+            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+              <option value="Photography">Photography</option>
+              <option value="Electronics">Electronics</option>
+              <option value="Collectibles">Collectibles</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="go-live-grid-2">
+          <div className="upload-wrap">
+            <label className="upload-title">Start Date & Time</label>
+            <input 
+              type="datetime-local" 
+              value={startTime} 
+              onChange={(e) => setStartTime(e.target.value)} 
+              required
+            />
+          </div>
+
+          <div className="upload-wrap">
+            <label className="upload-title">Auction Duration</label>
+            <select value={duration} onChange={(e) => setDuration(e.target.value)}>
+              {durationOptions.map(opt => (
+                <option key={opt.label} value={opt.label}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Using your specific stream-setup styling classes here */}
         <div className="stream-setup">
           <div className="stream-setup__head">
             <span className="stream-icon">📹</span>
             <div>
-              <h3>Live Stream Setup</h3>
-              <p>Your camera and microphone will be activated when you start the auction</p>
+              <h3>Stream Settings</h3>
+              <p>Configure your broadcast quality</p>
             </div>
           </div>
-          
-          <div className="stream-setup__meta">
-            <SelectField
-              label="Stream Quality Profile"
-              options={['720p Standard Definition', '1080p High Definition']}
-              value={streamQuality}
-              onChange={(event) => setStreamQuality(event.target.value)}
-            />
-            <p style={{ marginTop: '0.4rem', fontSize: '0.9rem', color: '#5a6388' }}>
-              Estimated Reach: <strong>Global Audience via Agora Edge</strong>
-            </p>
+          <div className="stream-setup__meta upload-wrap">
+            <select value={streamQuality} onChange={(e) => setStreamQuality(e.target.value)}>
+              <option>720p Standard Definition</option>
+              <option>1080p High Definition</option>
+            </select>
           </div>
         </div>
 
-        <FormInput
-          label="Product Title"
-          placeholder="Enter a descriptive title for your item"
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-          required
-        />
-
-        <TextareaField
-          label="Description"
-          placeholder="Provide detailed information about your item including condition, features, and any defects."
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
-        />
-
-        <div className="go-live-grid-2">
-          <SelectField
-            label="Category"
-            options={['Photography', 'Fashion', 'Music', 'Collectibles', 'Electronics', 'General']}
-            value={category}
-            onChange={(event) => setCategory(event.target.value)}
-          />
-
-          <FormInput
-            label="Starting Price ($)"
-            placeholder="0.00"
-            type="number"
-            min="1"
-            value={startingPrice}
-            onChange={(event) => setStartingPrice(event.target.value)}
-            required
-          />
-        </div>
-
-        <SelectField
-          label="Live Stream Duration"
-          options={durationOptions.map((item) => item.label)}
-          value={duration}
-          onChange={(event) => setDuration(event.target.value)}
-        />
-
-        <div className="upload-wrap">
-          <p className="upload-title">Product Preview Images</p>
-          <small>Upload thumbnail images for your auction listing</small>
-          <UploadBox />
-        </div>
-
-        {serverError && <p className="go-live-error" style={{ color: 'red', fontWeight: 'bold' }}>{serverError}</p>}
-        {successMessage && <p className="go-live-success" style={{ color: 'green', fontWeight: 'bold' }}>{successMessage}</p>}
-
         <div className="go-live-actions">
-          <Button
-            type="submit"
-            variant="urgent"
-            className="go-live-submit"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Creating Auction...' : 'Start Live Auction'}
-          </Button>
-
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={handleCancel}
-          >
+          <button type="button" className="btn-cancel" onClick={handleCancel} disabled={isSubmitting}>
             Cancel
-          </Button>
+          </button>
+          <button type="submit" className="go-live-submit btn-submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Scheduling...' : 'Create Auction'}
+          </button>
         </div>
       </form>
-    </PageContainer>
+    </div>
   );
 }
