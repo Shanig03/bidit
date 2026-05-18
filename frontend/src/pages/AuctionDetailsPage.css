@@ -1,5 +1,0 @@
-.auction-details-page{padding-top:1rem}.ad-grid{display:grid;grid-template-columns:2fr 1fr;gap:1rem}.ad-left,.ad-right{display:grid;gap:1rem}@media (max-width:1060px){.ad-grid{grid-template-columns:1fr}}
-
-@media (max-width: 640px) {
-  .auction-details-page { padding-top: 0.4rem; }
-}
