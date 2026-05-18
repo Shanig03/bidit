@@ -1,62 +1,18 @@
-import { useState, useEffect } from 'react';
-// Import AgoraRTC directly alongside the React hooks
-import AgoraRTC from "agora-rtc-sdk-ng";
-import {
-  useJoin,
-  useLocalCameraTrack,
-  useLocalMicrophoneTrack,
-  usePublish,
-  useRemoteUsers,
-  LocalUser,
-  RemoteUser
-} from 'agora-rtc-react';
 import './AuctionVideoPanel.css';
+import { LocalUser, RemoteUser } from 'agora-rtc-react';
+import { useAuctionVideo } from '../hooks/useAuctionVideo';
 
 function AuctionVideoPanel({ auction, currentUserId }) {
-  const [isJoined, setIsJoined] = useState(false);
-  
-  // 1. Add state to track the active video profile selection
-  // Defaulting to "720p_1" ensures great performance out of the box
-  const [videoProfile, setVideoProfile] = useState("720p_1");
-
-  const isHost = auction?.sellerId === currentUserId; 
-
-  const { localCameraTrack } = useLocalCameraTrack(isHost);
-  const { localMicrophoneTrack } = useLocalMicrophoneTrack(isHost);
-
-  // 2. The Stream Settings Configuration Effect
-  // This watches your camera track and the selected resolution profile.
-  useEffect(() => {
-    if (localCameraTrack) {
-      localCameraTrack.setVideoEncoderConfiguration({
-        profile: videoProfile,
-        frameRate: 30, // Maintains a smooth 30fps broadcast layout
-        bitrateMin: 600,
-        bitrateMax: videoProfile === "1080p_1" ? 3000 : 1500, // Allocates bandwidth based on selection
-      })
-      .then(() => {
-        console.log(`Video encoder successfully optimized for: ${videoProfile}`);
-      })
-      .catch((error) => {
-        console.error("Failed to update video encoder configuration:", error);
-      });
-    }
-  }, [localCameraTrack, videoProfile]);
-
-  useJoin({
-    appid: 'YOUR_AGORA_APP_ID', 
-    channel: auction?.agoraChannelName || `auction-${auction?.id}`,
-    token: null, 
-  }, isJoined);
-
-  usePublish([localMicrophoneTrack, localCameraTrack], isJoined && isHost);
-
-  const remoteUsers = useRemoteUsers();
-  const hostUser = remoteUsers.find((user) => user.hasVideo || user.hasAudio);
-
-  useEffect(() => {
-    return () => setIsJoined(false);
-  }, []);
+  const {
+    isJoined,
+    setIsJoined,
+    videoProfile,
+    setVideoProfile,
+    isHost,
+    localCameraTrack,
+    localMicrophoneTrack,
+    hostUser
+  } = useAuctionVideo(auction, currentUserId);
 
   return (
     <section className="avp card">
