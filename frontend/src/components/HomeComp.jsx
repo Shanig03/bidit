@@ -42,12 +42,6 @@ export default function HomeComp() {
           </Link>
         </div>
 
-        <ul className="home-trust-list">
-          {trustItems.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-
         <div className="home-feature-grid">
           {featureCards.map((feature, index) => (
             <article key={feature.title} className="home-feature-card">
