@@ -1,7 +1,5 @@
-
 import { useEffect, useState } from 'react';
 import { getAuctions } from '../api/auctionsApi'; 
-
 
 function mapAuctionToCardAuction(auction) {
   return {
@@ -67,9 +65,13 @@ export function useLiveAuctions() {
     return matchesCategory && matchesSearch;
   });
 
+  // Inside useLiveAuctions.js
+  const liveAuctionsCount = auctions.filter(auction => auction.status === 'LIVE').length;
+
   return {
     filteredAuctions,
     totalAuctions: auctions.length,
+    liveAuctionsCount,
     searchTerm,
     setSearchTerm,
     selectedCategory,

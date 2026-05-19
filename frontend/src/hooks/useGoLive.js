@@ -79,7 +79,7 @@ export function useGoLive() {
         imageUrl: '',
         agoraChannelName: `auction-${Date.now()}`,
         videoProfile: selectedAgoraProfile,
-        status: isScheduled ? 'scheduled' : 'active'
+        status: isScheduled ? 'UPCOMING' : 'LIVE'
       });
 
       setSuccessMessage('Auction scheduled successfully.');
