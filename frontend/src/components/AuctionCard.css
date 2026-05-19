@@ -12,6 +12,14 @@
     position: relative;
 }
 
+.auction-card__meta div:nth-child(2) strong {
+    font-size: 1.65rem;
+}
+
+.auction-card__meta div:nth-child(2) {
+    text-align: right; 
+}
+
 .auction-card:nth-child(2) .auction-card__image {
     background: linear-gradient(135deg, #f1f1f1, #b4b4b4);
 }

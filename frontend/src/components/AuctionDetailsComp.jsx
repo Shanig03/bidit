@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import PageContainer from './PageContainer';
 import AuctionVideoPanel from './AuctionVideoPanel';
 import BidPanel from './BidPanel';
@@ -8,6 +9,7 @@ import { useAuctionDetails } from '../hooks/useAuctionDetails';
 import './AuctionDetailsComp.css';
 
 export default function AuctionDetailsComp() {
+  const navigate = useNavigate();
   const {
     auction,
     currentUserId,
@@ -38,6 +40,28 @@ export default function AuctionDetailsComp() {
     return (
       <PageContainer className="auction-details-page">
         <p>Auction not found.</p>
+      </PageContainer>
+    );
+  }
+
+  const startTimestamp = auction.startsAt || auction.startTime;
+  const isUpcoming = startTimestamp && new Date(startTimestamp) > new Date();
+
+  if (isUpcoming) {
+    return (
+      <PageContainer className="auction-details-page">
+        <div style={{ textAlign: 'center', padding: '100px 20px' }}>
+          <h2>This auction hasn't started yet!</h2>
+          <p style={{ fontSize: '1.2rem', margin: '20px 0' }}>
+            Scheduled to begin at: <strong>{new Date(startTimestamp).toLocaleString()}</strong>
+          </p>
+          <button 
+            onClick={() => navigate('/dashboard')}
+            style={{ padding: '10px 20px', cursor: 'pointer', borderRadius: '8px', border: 'none', backgroundColor: '#8a2be2', color: 'white' }}
+          >
+            Go Back to Dashboard
+          </button>
+        </div>
       </PageContainer>
     );
   }

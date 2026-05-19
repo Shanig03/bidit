@@ -38,7 +38,7 @@ export default function HomeComp() {
           </Link>
 
           <Link to="/go-live">
-            <Button variant="secondary">Start Streaming</Button>
+            <Button variant="secondary">Start An Auction</Button>
           </Link>
         </div>
 

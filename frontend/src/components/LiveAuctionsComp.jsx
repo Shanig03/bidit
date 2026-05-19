@@ -10,6 +10,7 @@ const categories = ['All', 'Photography', 'Fashion', 'Music', 'Collectibles', 'B
 export default function LiveAuctionsComp() {
   const {
     filteredAuctions,
+    liveAuctionsCount,
     totalAuctions,
     searchTerm,
     setSearchTerm,
@@ -23,7 +24,7 @@ export default function LiveAuctionsComp() {
     <PageContainer className="live-page">
       <section className="live-hero card">
         <StatusBadge tone="urgent">
-          {totalAuctions} Live {totalAuctions === 1 ? 'Auction' : 'Auctions'}
+          {liveAuctionsCount} Live {liveAuctionsCount === 1 ? 'Auction' : 'Auctions'}
         </StatusBadge>
 
         <h1>
@@ -46,7 +47,7 @@ export default function LiveAuctionsComp() {
         <div className="live-chip-row">
           {categories.map((category) => (
             <CategoryChip
-              key={category}
+              key={category}      
               label={category}
               active={selectedCategory === category}
               onClick={() => setSelectedCategory(category)}
@@ -69,7 +70,6 @@ export default function LiveAuctionsComp() {
             <AuctionCard
               key={auction.id}
               auction={auction}
-              endingSoon={index === 1}
             />
           ))}
         </section>
