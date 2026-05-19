@@ -69,7 +69,6 @@ export default function LiveAuctionsComp() {
             <AuctionCard
               key={auction.id}
               auction={auction}
-              endingSoon={index === 1}
             />
           ))}
         </section>

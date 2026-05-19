@@ -1,24 +1,30 @@
 import { Link } from 'react-router-dom';
 import Button from './Button';
+import { useCountdown } from '../hooks/useCountdown';
 import './AuctionCard.css';
 
-function AuctionCard({ auction, endingSoon = false }) {
+// 1. Removed endingSoon from the props
+function AuctionCard({ auction }) {
   console.log("Card received this data:", auction);
 
   const startTimestamp = auction.startsAt || auction.startTime;
   const isUpcoming = startTimestamp && new Date(startTimestamp) > new Date();
+
+  // 2. The hook does all the heavy lifting now
+  const timeLeft = useCountdown(auction.endsAt, isUpcoming);
+
   return (
     <article className="auction-card">
       <div className="auction-card__image">
         <div className="auction-card__top">
-          <span className={`auction-card__badge ${endingSoon ? 'auction-card__badge--soon' : ''} ${isUpcoming ? 'auction-card__badge--scheduled' : ''}`}>
-            {isUpcoming ? 'Scheduled' : (endingSoon ? 'Ending Soon' : 'LIVE')}
+          <span className={`auction-card__badge ${isUpcoming ? 'auction-card__badge--scheduled' : ''}`}>
+            {isUpcoming ? 'Scheduled' : (timeLeft === 'Ended' ? 'Ended' : 'LIVE')}
           </span>
-          <span className="auction-card__viewers">👁 {auction.watchers}</span>
+          <span className="auction-card__viewers">👁 {auction.watchers || 0}</span>
         </div>
       </div>
       <div className="auction-card__body">
-        <p className="auction-card__host">Hosted by {auction.seller}</p>
+        <p className="auction-card__host">Hosted by {auction.seller || 'Unknown'}</p>
         <p className="auction-card__category">{auction.category}</p>
         <h3>{auction.title}</h3>
         <p className="auction-card__desc">{auction.category} collector item</p>
@@ -29,17 +35,19 @@ function AuctionCard({ auction, endingSoon = false }) {
             <strong>${auction.currentBid || auction.startingPrice}</strong>
           </div>
           <div>
-          <span>{isUpcoming ? 'Starts At' : 'Time left'}</span>
+            <span>{isUpcoming ? 'Starts At' : 'Time left'}</span>
             <strong>
+              {/* 4. Removed the hardcoded '45m' and '2h 14m' completely! */}
               {isUpcoming && startTimestamp
                 ? new Date(startTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
-                : (endingSoon ? '45m' : '2h 14m')}
+                : timeLeft}
             </strong>
-            </div>
+          </div>
         </div>
-        {isUpcoming ? (
-          <Button className="auction-card__cta" disabled={true}>
-            Not Started
+        
+        {isUpcoming || timeLeft === 'Ended' ? (
+          <Button className="auction-card__cta" disabled={true} style={{ opacity: 0.5, cursor: 'not-allowed' }}>
+            {timeLeft === 'Ended' ? 'Ended' : 'Not Started'}
           </Button>
         ) : (
           <Link to={`/auction/${auction.id}`}>
