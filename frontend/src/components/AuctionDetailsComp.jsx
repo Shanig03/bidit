@@ -10,6 +10,7 @@ import './AuctionDetailsComp.css';
 export default function AuctionDetailsComp() {
   const {
     auction,
+    currentUserId,
     bids,
     chat,
     isLoading,
@@ -45,8 +46,8 @@ export default function AuctionDetailsComp() {
     <PageContainer className="auction-details-page">
       <div className="ad-grid">
         <div className="ad-left">
-          <AuctionVideoPanel auction={auction} />
-          <LiveChat messages={chat} />
+          <AuctionVideoPanel auction={auction} currentUserId={currentUserId}/>
+          <LiveChat auctionId={auction.auctionId} />
           <ProductDescription auction={auction} />
         </div>
 

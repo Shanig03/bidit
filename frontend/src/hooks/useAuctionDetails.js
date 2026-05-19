@@ -1,9 +1,9 @@
-
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getAuctionById, placeBid } from '../api/auctionsApi'; 
-import { getBidsForAuction } from '../data/mockBids';
+import { getAuctionById, placeBid, getBidsByAuctionId } from '../api/auctionsApi';
 import { getChatMessagesForAuction } from '../data/mockChatMessages';
+import { useAuth } from '../context/AuthContext';
+
 
 function mapApiAuctionToPageAuction(apiAuction) {
   return {
@@ -33,7 +33,8 @@ function mapApiAuctionToPageAuction(apiAuction) {
 export function useAuctionDetails() {
   const { id, auctionId } = useParams();
   const selectedAuctionId = auctionId || id;
-
+  const { user } = useAuth(); 
+  const currentUserId = user?.uid;
   const [auction, setAuction] = useState(null);
   const [bids, setBids] = useState([]);
   const [chat, setChat] = useState([]);
@@ -49,8 +50,10 @@ export function useAuctionDetails() {
         const apiAuction = await getAuctionById(selectedAuctionId);
         const mappedAuction = mapApiAuctionToPageAuction(apiAuction);
 
+        const apiBids = await getBidsByAuctionId(selectedAuctionId);
+
         setAuction(mappedAuction);
-        setBids(getBidsForAuction(mappedAuction.id));
+        setBids(apiBids);
         setChat(getChatMessagesForAuction(mappedAuction.id));
       } catch (error) {
         setErrorMessage(error.message || 'Failed to load auction.');
@@ -71,15 +74,18 @@ export function useAuctionDetails() {
       amount,
     });
 
-    // Refresh the auction data after placing a bid
     const updatedAuction = await getAuctionById(selectedAuctionId);
     const mappedAuction = mapApiAuctionToPageAuction(updatedAuction);
 
+    const updatedBids = await getBidsByAuctionId(selectedAuctionId);
+
     setAuction(mappedAuction);
+    setBids(updatedBids);
   }
 
   return {
     auction,
+    currentUserId,
     bids,
     chat,
     isLoading,

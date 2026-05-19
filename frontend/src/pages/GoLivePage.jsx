@@ -1,7 +1,8 @@
+import { useGoLive } from '../hooks/useGoLive';
 import GoLiveComp from '../components/GoLiveComp';
 
-function GoLivePage() {
-  return <GoLiveComp />;
-}
+export default function GoLivePage() {
+  const goLiveLogic = useGoLive();
 
-export default GoLivePage;
+  return <GoLiveComp {...goLiveLogic} />;
+}
