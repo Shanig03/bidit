@@ -14,13 +14,13 @@ export function useAuctionVideo(auction, currentUserId) {
 
   const isHost = auction?.sellerId === currentUserId; 
 
-  const { localCameraTrack } = useLocalCameraTrack(isHost);
-  const { localMicrophoneTrack } = useLocalMicrophoneTrack(isHost);
+  const { localCameraTrack } = useLocalCameraTrack(isHost && isJoined);
+  const { localMicrophoneTrack } = useLocalMicrophoneTrack(isHost && isJoined);
 
   // Video encoder configuration effect
   useEffect(() => {
     if (localCameraTrack) {
-      localCameraTrack.setVideoEncoderConfiguration({
+      localCameraTrack.setEncoderConfiguration({
         profile: videoProfile,
         frameRate: 30, 
         bitrateMin: 600,

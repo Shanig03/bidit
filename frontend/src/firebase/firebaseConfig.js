@@ -25,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 const googleProvider = new GoogleAuthProvider();
 
 export const auth = getAuth(app);
-export const realtimeDb = getDatabase(app);
+// export const realtimeDb = getDatabase(app);
 
 export const authService = {
   register: async (email, password, username) => {

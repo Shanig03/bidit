@@ -1,7 +1,7 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createAuction } from '../api/auctionsApi'; 
+import { useAuth } from '../context/AuthContext';
+import { createAuction } from '../api/auctionsService';
 
 export const durationOptions = [
   { label: '24 hours', hours: 24 },
@@ -15,24 +15,27 @@ const resolutionMap = {
   '1080p High Definition': '1080p_1'
 };
 
-function calculateEndsAt(durationLabel) {
-  const selectedDuration = durationOptions.find((duration) => duration.label === durationLabel);
+
+function calculateEndsAt(startTimeString, durationLabel) {
+  const selectedDuration = durationOptions.find((d) => d.label === durationLabel);
   const hoursToAdd = selectedDuration ? selectedDuration.hours : 24;
 
-  const endDate = new Date();
-  endDate.setHours(endDate.getHours() + hoursToAdd);
+  const baseDate = startTimeString ? new Date(startTimeString) : new Date();
+  baseDate.setHours(baseDate.getHours() + hoursToAdd);
 
-  return endDate.toISOString();
+  return baseDate.toISOString();
 }
 
 export function useGoLive() {
   const navigate = useNavigate();
+  const { user } = useAuth(); 
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('Photography');
   const [startingPrice, setStartingPrice] = useState('');
   const [duration, setDuration] = useState('24 hours');
+  const [startTime, setStartTime] = useState(''); // 👈 New state for date/time
   const [streamQuality, setStreamQuality] = useState('720p Standard Definition');
   
   const [serverError, setServerError] = useState('');
@@ -44,34 +47,38 @@ export function useGoLive() {
     setServerError('');
     setSuccessMessage('');
 
-    if (!title.trim()) {
-      setServerError('Product title is required.');
-      return;
+    if (!user) {
+      return setServerError('You must be logged in to create an auction.');
     }
-
+    if (!title.trim()) {
+      return setServerError('Product title is required.');
+    }
     if (!startingPrice || Number(startingPrice) <= 0) {
-      setServerError('Starting price must be greater than 0.');
-      return;
+      return setServerError('Starting price must be greater than 0.');
+    }
+    if (!startTime) {
+      return setServerError('Please select a start date and time.');
     }
 
     try {
       setIsSubmitting(true);
-
       const selectedAgoraProfile = resolutionMap[streamQuality] || '720p_1';
 
       const result = await createAuction({
-        sellerId: 'firebase-user-123', // Swap out for real Firebase user session variable later
+        sellerId: user.uid, 
+        sellerName: user.displayName || 'Unknown Seller',
         title: title.trim(),
         description: description.trim(),
         category,
         startingPrice: Number(startingPrice),
-        endsAt: calculateEndsAt(duration),
+        startTime: new Date(startTime).toISOString(), 
+        endsAt: calculateEndsAt(startTime, duration), 
         imageUrl: '',
         agoraChannelName: `auction-${Date.now()}`,
         videoProfile: selectedAgoraProfile 
       });
 
-      setSuccessMessage('Auction created successfully.');
+      setSuccessMessage('Auction scheduled successfully.');
       navigate(`/auction/${result.auction.auctionId}`);
     } catch (error) {
       setServerError(error.message || 'Failed to create auction.');
@@ -90,11 +97,9 @@ export function useGoLive() {
     category, setCategory,
     startingPrice, setStartingPrice,
     duration, setDuration,
+    startTime, setStartTime, 
     streamQuality, setStreamQuality,
-    serverError,
-    successMessage,
-    isSubmitting,
-    handleStartAuction,
-    handleCancel
+    serverError, successMessage, isSubmitting,
+    handleStartAuction, handleCancel
   };
 }
