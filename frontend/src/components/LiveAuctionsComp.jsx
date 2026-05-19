@@ -46,7 +46,7 @@ export default function LiveAuctionsComp() {
         <div className="live-chip-row">
           {categories.map((category) => (
             <CategoryChip
-              key={category}
+              key={category}      
               label={category}
               active={selectedCategory === category}
               onClick={() => setSelectedCategory(category)}

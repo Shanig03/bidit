@@ -63,6 +63,9 @@ export function useGoLive() {
     try {
       setIsSubmitting(true);
       const selectedAgoraProfile = resolutionMap[streamQuality] || '720p_1';
+      
+      const startDateTime = new Date(startTime);
+      const isScheduled = startDateTime > new Date();
 
       const result = await createAuction({
         sellerId: user.uid, 
@@ -71,15 +74,20 @@ export function useGoLive() {
         description: description.trim(),
         category,
         startingPrice: Number(startingPrice),
-        startTime: new Date(startTime).toISOString(), 
+        startsAt: new Date(startTime).toISOString(), 
         endsAt: calculateEndsAt(startTime, duration), 
         imageUrl: '',
         agoraChannelName: `auction-${Date.now()}`,
-        videoProfile: selectedAgoraProfile 
+        videoProfile: selectedAgoraProfile,
+        status: isScheduled ? 'scheduled' : 'active'
       });
 
       setSuccessMessage('Auction scheduled successfully.');
-      navigate(`/auction/${result.auction.auctionId}`);
+      if (isScheduled) {
+        navigate('/dashboard');
+      } else {
+        navigate(`/auction/${result.auction.auctionId}`); 
+      }
     } catch (error) {
       setServerError(error.message || 'Failed to create auction.');
     } finally {
