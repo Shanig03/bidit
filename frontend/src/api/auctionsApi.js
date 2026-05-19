@@ -57,3 +57,14 @@ export async function placeBid(auctionId, bidData) {
 
   return data;
 }
+
+export async function getBidsByAuctionId(auctionId) {
+  const response = await fetch(`${API_BASE_URL}/auctions/${auctionId}/bids`);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to fetch bids');
+  }
+
+  return data.bids || [];
+}
