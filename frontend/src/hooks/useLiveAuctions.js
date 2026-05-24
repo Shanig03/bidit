@@ -21,6 +21,7 @@ function mapAuctionToCardAuction(auction) {
     startsAt: auction.startsAt,
     startTime: auction.startTime,
     imageUrl: auction.imageUrl,
+    imageKey: auction.imageKey,
     sellerId: auction.sellerId,
     viewers: auction.viewers || 0,
     watchers: auction.watchers || 0,

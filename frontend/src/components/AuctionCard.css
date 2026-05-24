@@ -105,3 +105,6 @@
     width: 100%;
     margin-top: 0.75rem;
 }
+.auction-card__image{position:relative;overflow:hidden;}
+.auction-card__image-el{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.auction-card__top{position:relative;z-index:2;}

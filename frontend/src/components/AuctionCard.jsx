@@ -1,10 +1,13 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import Button from './Button';
 import { useCountdown } from '../hooks/useCountdown';
+import { getImageViewUrl } from '../api/uploadService';
 import './AuctionCard.css';
 
 // 1. Updated display logic within the component
 function AuctionCard({ auction }) {
+  const [imageSrc, setImageSrc] = useState(auction.imageUrl || '');
   const startTimestamp = auction.startsAt || auction.startTime;
   const isUpcoming = startTimestamp && new Date(startTimestamp) > new Date();
   const timeLeft = useCountdown(auction.endsAt, isUpcoming);
@@ -19,9 +22,34 @@ function AuctionCard({ auction }) {
     });
   };
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadImage() {
+      if (auction?.imageKey) {
+        try {
+          const viewUrl = await getImageViewUrl(auction.imageKey);
+          if (isMounted) setImageSrc(viewUrl || '');
+          return;
+        } catch (error) {
+          console.error('Failed to load auction image view URL:', error);
+        }
+      }
+
+      if (isMounted) setImageSrc(auction?.imageUrl || '');
+    }
+
+    loadImage();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [auction?.imageKey, auction?.imageUrl]);
+
   return (
     <article className="auction-card">
       <div className="auction-card__image">
+        {imageSrc ? <img src={imageSrc} alt={auction.title} className="auction-card__image-el" /> : null}
         <div className="auction-card__top">
           {/* Badge Label: Updated to "Upcoming" */}
           <span className={`auction-card__badge ${isUpcoming ? 'auction-card__badge--upcoming' : ''}`}>

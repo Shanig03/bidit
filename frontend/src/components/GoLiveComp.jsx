@@ -1,4 +1,5 @@
 import { durationOptions } from '../hooks/useGoLive';
+import ProductImageUploader from './ProductImageUploader';
 import './GoLiveComp.css';
 
 export default function GoLiveComp(props) {
@@ -10,7 +11,9 @@ export default function GoLiveComp(props) {
     duration, setDuration,
     startTime, setStartTime,
     streamQuality, setStreamQuality,
+    productImageFile, productImagePreviewUrl, productImageError,
     serverError, successMessage, isSubmitting,
+    handleProductImageSelect, handleRemoveProductImage,
     handleStartAuction, handleCancel
   } = props;
 
@@ -88,6 +91,16 @@ export default function GoLiveComp(props) {
             </select>
           </div>
         </div>
+
+
+        <ProductImageUploader
+          selectedFile={productImageFile}
+          previewUrl={productImagePreviewUrl}
+          onFileSelect={handleProductImageSelect}
+          onRemove={handleRemoveProductImage}
+          disabled={isSubmitting}
+          errorMessage={productImageError}
+        />
 
         {/* Using your specific stream-setup styling classes here */}
         <div className="stream-setup">

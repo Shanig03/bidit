@@ -76,3 +76,19 @@ export async function placeBid(auctionId, bidData) {
 
   return data;
 }
+
+export async function updateAuction(auctionId, updates) {
+  const response = await fetch(`${API_BASE_URL}/auctions/${auctionId}`, {
+    method: "PATCH",
+    headers: await getAuthHeaders(),
+    body: JSON.stringify(updates),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to update auction");
+  }
+
+  return data;
+}
