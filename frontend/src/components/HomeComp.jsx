@@ -27,9 +27,10 @@ export default function HomeComp() {
           Win fast.
         </h1>
 
-        <p className="home-subtitle">
-          Watch sellers showcase amazing items in live video streams. Place real-time bids and win incredible
-          products from around the world.
+       <p className="home-subtitle">
+          Watch sellers showcase amazing items in live video streams.
+          <br />
+          Place real-time bids and win incredible products from around the world.
         </p>
 
         <div className="home-cta-row">
