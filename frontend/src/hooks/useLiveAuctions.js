@@ -1,12 +1,10 @@
-
 import { useEffect, useState } from 'react';
 import { getAuctions } from '../api/auctionsApi'; 
 
-
 function mapAuctionToCardAuction(auction) {
   return {
-    id: auction.auctionId,
-    auctionId: auction.auctionId,
+    ...auction,
+    id: auction.auctionId || auction.id,
     title: auction.title,
     name: auction.title,
     description: auction.description,
@@ -20,6 +18,8 @@ function mapAuctionToCardAuction(auction) {
     status: auction.status,
     endsAt: auction.endsAt,
     timeLeft: auction.endsAt,
+    startsAt: auction.startsAt,
+    startTime: auction.startTime,
     imageUrl: auction.imageUrl,
     sellerId: auction.sellerId,
     viewers: auction.viewers || 0,
@@ -65,9 +65,13 @@ export function useLiveAuctions() {
     return matchesCategory && matchesSearch;
   });
 
+  // Inside useLiveAuctions.js
+  const liveAuctionsCount = auctions.filter(auction => auction.status === 'LIVE').length;
+
   return {
     filteredAuctions,
     totalAuctions: auctions.length,
+    liveAuctionsCount,
     searchTerm,
     setSearchTerm,
     selectedCategory,

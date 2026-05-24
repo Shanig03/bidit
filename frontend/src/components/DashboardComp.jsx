@@ -6,6 +6,8 @@ import DashboardBidItem from './DashboardBidItem';
 import DashboardWonItem from './DashboardWonItem';
 import { useDashboard, tabs } from '../hooks/useDashboard';
 import './DashboardComp.css';
+import { Link } from 'react-router-dom';
+
 
 export default function DashboardComp() {
   const {
@@ -53,10 +55,6 @@ export default function DashboardComp() {
           </h1>
           <p>Manage your live auctions, bids, and winnings</p>
         </div>
-
-        <Button className="dashboard-cta" onClick={handleCreateAuction}>
-          Start New Live Auction
-        </Button>
       </header>
 
       <section className="dashboard-card card">
