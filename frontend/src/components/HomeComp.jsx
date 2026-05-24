@@ -27,9 +27,10 @@ export default function HomeComp() {
           Win fast.
         </h1>
 
-        <p className="home-subtitle">
-          Watch sellers showcase amazing items in live video streams. Place real-time bids and win incredible
-          products from around the world.
+       <p className="home-subtitle">
+          Watch sellers showcase amazing items in live video streams.
+          <br />
+          Place real-time bids and win incredible products from around the world.
         </p>
 
         <div className="home-cta-row">
@@ -41,12 +42,6 @@ export default function HomeComp() {
             <Button variant="secondary">Start An Auction</Button>
           </Link>
         </div>
-
-        <ul className="home-trust-list">
-          {trustItems.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
 
         <div className="home-feature-grid">
           {featureCards.map((feature, index) => (

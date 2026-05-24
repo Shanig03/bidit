@@ -2,6 +2,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import './Navbar.css';
 import Button from './Button';
 import { useAuth } from '../context/AuthContext';
+import { useLogout } from '../hooks/useLogOut';
 
 const navItems = [
   { label: 'Home', to: '/' },
@@ -15,6 +16,7 @@ const DEV_SHOW_PROFILE_LINK = true;
 function Navbar() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { executeLogout, loading: isLoggingOut } = useLogout();
   const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
 
   return (
@@ -53,7 +55,8 @@ function Navbar() {
               </Link>
             </>
           ) : (
-            <button type="button" className="navbar__user" onClick={() => navigate('/profile')}>
+            <div className="navbar__user-group">
+              <button type="button" className="navbar__user" onClick={() => navigate('/profile')}>
               <span className="navbar__bell" aria-hidden="true">🔔</span>
               {user.photoURL ? (
                 <img src={user.photoURL} alt={displayName} className="navbar__avatar" />
@@ -65,6 +68,17 @@ function Navbar() {
               <span className="navbar__user-name">{displayName}</span>
               <span aria-hidden="true">▾</span>
             </button>
+
+            <button 
+                type="button" 
+                className="navbar__logout-btn" 
+                onClick={executeLogout}
+                disabled={isLoggingOut}
+              >
+                {isLoggingOut ? '...' : 'Sign Out'}
+              </button>
+            </div>
+            
           )}
         </div>
       </nav>
