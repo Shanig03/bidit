@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getAuctionById, placeBid, getBidsByAuctionId } from '../api/auctionsApi';
 import { getChatMessagesForAuction } from '../data/mockChatMessages';
 import { useAuth } from '../context/AuthContext';
+import { database } from '../firebase/firebaseConfig';
+
 
 
 function mapApiAuctionToPageAuction(apiAuction) {
@@ -34,6 +36,7 @@ export function useAuctionDetails() {
   const { id, auctionId } = useParams();
   const selectedAuctionId = auctionId || id;
   const { user } = useAuth(); 
+  const navigate = useNavigate();
   const currentUserId = user?.uid;
   const [auction, setAuction] = useState(null);
   const [bids, setBids] = useState([]);
@@ -66,6 +69,17 @@ export function useAuctionDetails() {
       loadAuction();
     }
   }, [selectedAuctionId]);
+
+  useEffect(() => {
+    if (auction && auction.endsAt) {
+      const hasEnded = new Date(auction.endsAt) <= new Date();
+      if (hasEnded) {
+        navigate('/dashboard', { replace: true });
+      }
+    }
+  }, [auction, navigate]);
+
+  
 
   async function handlePlaceBid(amount) {
     await placeBid(selectedAuctionId, {
