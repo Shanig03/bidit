@@ -10,8 +10,6 @@ const navItems = [
   { label: 'Go Live', to: '/go-live' },
   { label: 'Dashboard', to: '/dashboard' },
 ];
-const DEV_SHOW_PROFILE_LINK = true;
-// Temporary development-only profile access. Remove or disable when authentication is connected.
 
 function Navbar() {
   const navigate = useNavigate();
@@ -42,11 +40,6 @@ function Navbar() {
         <div className="navbar__actions">
           {!user ? (
             <>
-              {DEV_SHOW_PROFILE_LINK ? (
-                <Link className="navbar__dev-profile-link" to="/profile">
-                  Profile
-                </Link>
-              ) : null}
               <Link to="/login">
                 <Button variant="secondary">Log In</Button>
               </Link>

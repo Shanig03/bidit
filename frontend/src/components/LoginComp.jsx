@@ -18,7 +18,7 @@ export default function LoginComp({ onSubmit, onGoogleLogin, error, loading }) {
   return (
     <PageContainer className="login-page">
       <section className="login-shell">
-        <p className="login-brand">📹 BidIt</p>
+        <p className="login-brand">BidIt</p>
         <h1>Welcome Back!</h1>
         <p className="login-subtitle">Log in to join live auctions and start bidding</p>
 
@@ -27,7 +27,6 @@ export default function LoginComp({ onSubmit, onGoogleLogin, error, loading }) {
 
           <label htmlFor="email">Email Address</label>
           <div className="login-input-wrap">
-            <span>✉️</span>
             <input
               id="email"
               type="email"
@@ -40,7 +39,6 @@ export default function LoginComp({ onSubmit, onGoogleLogin, error, loading }) {
 
           <label htmlFor="password">Password</label>
           <div className="login-input-wrap">
-            <span>🔒</span>
             <input
               id="password"
               type={showPassword ? "text" : "password"}
@@ -55,7 +53,7 @@ export default function LoginComp({ onSubmit, onGoogleLogin, error, loading }) {
               onClick={() => setShowPassword(!showPassword)}
               aria-label="Toggle password visibility"
             >
-              👁️
+              
             </button>
           </div>
 
