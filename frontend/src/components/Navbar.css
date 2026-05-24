@@ -122,3 +122,32 @@
   color: var(--color-text);
   background: #f7f3ff;
 }
+
+.navbar__user-group {
+  display: flex;
+  align-items: center;
+  gap: 16px; 
+}
+
+
+.navbar__logout-btn {
+  background-color: transparent;
+  color: #ef4444; 
+  border: 1px solid #ef4444;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.navbar__logout-btn:hover:not(:disabled) {
+  background-color: #ef4444;
+  color: #ffffff;
+}
+
+.navbar__logout-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
