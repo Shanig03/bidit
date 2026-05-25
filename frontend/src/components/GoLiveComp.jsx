@@ -3,16 +3,25 @@ import './GoLiveComp.css';
 
 export default function GoLiveComp(props) {
   const {
-    title, setTitle,
-    description, setDescription,
-    category, setCategory,
-    startingPrice, setStartingPrice,
-    duration, setDuration,
-    startTime, setStartTime,
-    streamQuality, setStreamQuality,
-    serverError, successMessage, isSubmitting,
-    handleStartAuction, handleCancel
-  } = props;
+    title, 
+    setTitle,
+    description, 
+    setDescription,
+    category, 
+    setCategory,
+    startingPrice, 
+    setStartingPrice,
+    duration, 
+    setDuration,
+    startTime, 
+    setStartTime,
+    streamQuality, 
+    setStreamQuality,
+    serverError, 
+    successMessage, 
+    isSubmitting,
+    handleStartAuction, 
+    handleCancel} = props;
 
   return (
     <div className="go-live-page">
@@ -61,9 +70,17 @@ export default function GoLiveComp(props) {
           <div className="upload-wrap">
             <label className="upload-title">Category</label>
             <select value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="Photography">Photography</option>
               <option value="Electronics">Electronics</option>
               <option value="Collectibles">Collectibles</option>
+              <option value="Fashion">Fashion</option>
+              <option value="Jewelry">Jewelry</option>
+              <option value="Art">Art</option>
+              <option value="Home">Home</option>
+              <option value="Beauty">Beauty</option>
+              <option value="Books">Books</option>
+              <option value="Sports">Sports</option>
+              <option value="Toys">Toys</option>
+              <option value="Other">Other</option>
             </select>
           </div>
         </div>

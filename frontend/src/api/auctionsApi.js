@@ -11,7 +11,7 @@ export async function getAuctions() {
   return data.auctions;
 }
 
-export async function createAuction(auctionData) {
+export async function createAuction(auctionData) {  
   const response = await fetch(`${API_BASE_URL}/auctions`, {
     method: "POST",
     headers: {

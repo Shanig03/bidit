@@ -68,14 +68,15 @@ export function useGoLive() {
       const isScheduled = startDateTime > new Date();
 
       const result = await createAuction({
-        sellerId: user.uid, 
-        sellerName: user.displayName || 'Unknown Seller',
+        sellerId: user.uid,
+        sellerName: user.displayName || user.email || 'Unknown Seller',
+        sellerEmail: user.email || '',
         title: title.trim(),
         description: description.trim(),
         category,
         startingPrice: Number(startingPrice),
-        startsAt: new Date(startTime).toISOString(), 
-        endsAt: calculateEndsAt(startTime, duration), 
+        startsAt: new Date(startTime).toISOString(),
+        endsAt: calculateEndsAt(startTime, duration),
         imageUrl: '',
         agoraChannelName: `auction-${Date.now()}`,
         videoProfile: selectedAgoraProfile,

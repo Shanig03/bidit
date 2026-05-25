@@ -22,7 +22,14 @@ function mapAuctionToCardAuction(auction) {
     startTime: auction.startTime,
     imageUrl: auction.imageUrl,
     sellerId: auction.sellerId,
-    seller: auction.seller || auction.sellerName || auction.sellerEmail || auction.sellerId,
+    sellerName: auction.sellerName,
+    seller:
+      auction.sellerName ||
+      auction.sellerDisplayName ||
+      auction.sellerUsername ||
+      auction.sellerEmail ||
+      auction.seller ||
+      'Unknown',
     viewers: auction.viewers || 0,
     watchers: auction.watchers || 0,
   };
