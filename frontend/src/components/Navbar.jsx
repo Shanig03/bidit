@@ -50,7 +50,7 @@ function Navbar() {
           ) : (
             <div className="navbar__user-group">
               <button type="button" className="navbar__user" onClick={() => navigate('/profile')}>
-              <span className="navbar__bell" aria-hidden="true">🔔</span>
+              <span className="navbar__bell" aria-hidden="true"></span>
               {user.photoURL ? (
                 <img src={user.photoURL} alt={displayName} className="navbar__avatar" />
               ) : (
