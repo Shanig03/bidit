@@ -3,7 +3,7 @@ import Button from './Button';
 import { useCountdown } from '../hooks/useCountdown';
 import './AuctionCard.css';
 
-// 1. Updated display logic within the component
+// Updated display logic within the component
 function AuctionCard({ auction }) {
   const startTimestamp = auction.startsAt || auction.startTime;
   const isUpcoming = startTimestamp && new Date(startTimestamp) > new Date();
@@ -34,13 +34,13 @@ function AuctionCard({ auction }) {
         <p className="auction-card__host">Hosted by {auction.seller || 'Unknown'}</p>
         <p className="auction-card__category">{auction.category}</p>
         <h3>{auction.title}</h3>
-        <p className="auction-card__desc">{auction.category} collector item</p>
+        {/* <p className="auction-card__desc">{auction.category} collector item</p> */}
 
         <div className="auction-card__meta">
           <div>
             {/* Dynamic Price Label: Starting Price vs Current Bid */}
             <span>{isUpcoming ? 'Starting Price' : 'Current Bid'}</span>
-            <strong>${auction.currentBid || auction.startingPrice}</strong>
+            <strong>${auction.currentBid ?? auction.startingPrice}</strong>
           </div>
           <div>
             <span>{isUpcoming ? 'Starts At' : 'Time left'}</span>
