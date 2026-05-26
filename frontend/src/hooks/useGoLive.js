@@ -69,7 +69,7 @@ export function useGoLive() {
 
       const result = await createAuction({
         sellerId: user.uid,
-        sellerName: user.displayName || user.email || 'Unknown Seller',
+        sellerName: user.displayName || user.email?.split('@')[0] || 'Unknown Seller',
         sellerEmail: user.email || '',
         title: title.trim(),
         description: description.trim(),
