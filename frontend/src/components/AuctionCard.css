@@ -105,3 +105,18 @@
     width: 100%;
     margin-top: 0.75rem;
 }
+
+.auction-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.auction-card__join-link {
+  flex: 1;
+  text-decoration: none;
+}
+.auction-card__actions .auction-card__cta {
+  margin-top: 0;
+}

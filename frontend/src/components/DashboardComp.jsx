@@ -7,6 +7,8 @@ import DashboardWonItem from './DashboardWonItem';
 import { useDashboard, tabs } from '../hooks/useDashboard';
 import './DashboardComp.css';
 import { Link } from 'react-router-dom';
+import AuctionCard from './AuctionCard';
+import { useFavorites } from '../hooks/useFavorites';
 
 
 export default function DashboardComp() {
@@ -22,28 +24,23 @@ export default function DashboardComp() {
     handleViewAuction
   } = useDashboard();
 
-  function renderLiveAuctions() {
-    if (isLoadingLiveAuctions) {
-      return <p className="dashboard-message">Loading live auctions...</p>;
+  const { favorites } = useFavorites();
+
+  function renderFavoriteAuctions() {
+    if (favorites.length === 0) {
+      return <p className="dashboard-message">No favorite auctions yet.</p>;
     }
 
-    if (errorMessage) {
-      return <p className="dashboard-message dashboard-error">{errorMessage}</p>;
-    }
-
-    if (liveStreams.length === 0) {
-      return <p className="dashboard-message">No live auctions yet.</p>;
-    }
-
-    return liveStreams.map((item, index) => (
-      <DashboardLiveStreamItem
-        key={item.id}
-        item={item}
-        imageVariant={index + 1}
-        onViewStream={() => handleViewAuction(item.id)}
-        onManage={() => handleViewAuction(item.id)}
-      />
-    ));
+    return (
+      <div className="dashboard-favorites-grid">
+        {favorites.map((auction) => (
+          <AuctionCard
+            key={auction.id || auction.auctionId}
+            auction={auction}
+          />
+        ))}
+      </div>
+    );
   }
 
   return (
@@ -61,8 +58,8 @@ export default function DashboardComp() {
         <DashboardTabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
         <div className="dashboard-content">
-          {activeTab === 'live'
-            ? renderLiveAuctions()
+          {activeTab === 'favorites'
+            ? renderFavoriteAuctions()
             : activeTab === 'bids'
               ? myBids.map((item, index) => (
                   <DashboardBidItem

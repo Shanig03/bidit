@@ -2,12 +2,19 @@ import { Link } from 'react-router-dom';
 import Button from './Button';
 import { useCountdown } from '../hooks/useCountdown';
 import './AuctionCard.css';
+import FavoriteButton from './FavoriteButton';
+import { useFavorites } from '../hooks/useFavorites';
 
 // Updated display logic within the component
 function AuctionCard({ auction }) {
   const startTimestamp = auction.startsAt || auction.startTime;
   const isUpcoming = startTimestamp && new Date(startTimestamp) > new Date();
   const timeLeft = useCountdown(auction.endsAt, isUpcoming);
+
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const auctionId = auction.id || auction.auctionId;
+  const isEnded = timeLeft === 'Ended' || auction.status === 'ENDED';
+  const isAuctionFavorite = isFavorite(auctionId);
 
   // Helper for better date/time display
   const formatDateTime = (isoString) => {
@@ -34,8 +41,7 @@ function AuctionCard({ auction }) {
         <p className="auction-card__host">Hosted by {auction.seller || 'Unknown'}</p>
         <p className="auction-card__category">{auction.category}</p>
         <h3>{auction.title}</h3>
-        {/* <p className="auction-card__desc">{auction.category} collector item</p> */}
-
+        
         <div className="auction-card__meta">
           <div>
             {/* Dynamic Price Label: Starting Price vs Current Bid */}
@@ -53,15 +59,27 @@ function AuctionCard({ auction }) {
           </div>
         </div>
         
-        {isUpcoming || timeLeft === 'Ended' ? (
-          <Button className="auction-card__cta" disabled={true} style={{ opacity: 0.5, cursor: 'not-allowed' }}>
-            {timeLeft === 'Ended' ? 'Ended' : 'Not Started'}
-          </Button>
-        ) : (
-          <Link to={`/auction/${auction.id}`}>
-            <Button className="auction-card__cta">Join Stream</Button>
-          </Link>
-        )}
+        <div className="auction-card__actions">
+            {isUpcoming || isEnded ? (
+              <Button
+                className="auction-card__cta"
+                disabled={true}
+                style={{ opacity: 0.5, cursor: 'not-allowed' }}
+              >
+                {isEnded ? 'Ended' : 'Not Started'}
+              </Button>
+            ) : (
+              <Link to={`/auction/${auctionId}`} className="auction-card__join-link">
+                <Button className="auction-card__cta">Join Stream</Button>
+              </Link>
+            )}
+
+            <FavoriteButton
+              active={isAuctionFavorite}
+              disabled={isEnded && !isAuctionFavorite}
+              onClick={() => toggleFavorite(auction)}
+            />
+          </div>
       </div>
     </article>
   );

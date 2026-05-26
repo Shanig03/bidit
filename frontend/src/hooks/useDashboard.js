@@ -5,7 +5,7 @@ import { getAuctions } from '../api/auctionsApi';
 import { getDashboardItems } from '../data/mockDashboard'; 
 
 export const tabs = [
-  { id: 'live', label: 'Live Auctions' },
+  { id: 'favorites', label: 'My Favorites' },
   { id: 'bids', label: 'My Bids' },
   { id: 'won', label: 'Won Auctions' },
 ];
@@ -31,7 +31,7 @@ function mapAuctionToDashboardItem(auction) {
 export function useDashboard() {
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState('live');
+  const [activeTab, setActiveTab] = useState('favorites');
   const [liveStreams, setLiveStreams] = useState([]);
   const [isLoadingLiveAuctions, setIsLoadingLiveAuctions] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
