@@ -18,11 +18,12 @@ function AuctionCard({ auction }) {
 
   // Helper for better date/time display
   const formatDateTime = (isoString) => {
-    return new Date(isoString).toLocaleString([], {
-      month: 'short', 
-      day: 'numeric', 
-      hour: '2-digit', 
-      minute: '2-digit'
+    return new Date(isoString).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
     });
   };
 

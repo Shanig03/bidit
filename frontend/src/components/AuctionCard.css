@@ -12,10 +12,6 @@
     position: relative;
 }
 
-.auction-card__meta div:nth-child(2) strong {
-    font-size: 1.65rem;
-}
-
 .auction-card__meta div:nth-child(2) {
     text-align: right; 
 }
@@ -98,7 +94,7 @@
 
 .auction-card__meta strong {
     color: #5b4cff;
-    font-size: 1.8rem;
+    font-size: 1.2rem;
 }
 
 .auction-card__cta {
