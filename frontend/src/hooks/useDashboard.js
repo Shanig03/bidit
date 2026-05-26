@@ -6,8 +6,7 @@ import { getDashboardItems } from '../data/mockDashboard';
 
 export const tabs = [
   { id: 'favorites', label: 'My Favorites' },
-  { id: 'bids', label: 'My Bids' },
-  { id: 'won', label: 'Won Auctions' },
+  { id: 'bids', label: 'My Bids' }
 ];
 
 function mapAuctionToDashboardItem(auction) {

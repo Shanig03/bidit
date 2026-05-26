@@ -69,8 +69,9 @@ export function useAuctionDetails() {
 
   async function handlePlaceBid(amount) {
     await placeBid(selectedAuctionId, {
-      bidderId: 'firebase-buyer-123',
-      bidderEmail: 'buyer@example.com',
+      bidderId: user.uid,
+      bidderEmail: user.email,
+      bidderName: user.displayName || user.email || 'Unknown bidder',
       amount,
     });
 

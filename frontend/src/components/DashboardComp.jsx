@@ -1,12 +1,8 @@
 import PageContainer from './PageContainer';
-import Button from './Button';
 import DashboardTabs from './DashboardTabs';
-import DashboardLiveStreamItem from './DashboardLiveStreamItem';
 import DashboardBidItem from './DashboardBidItem';
-import DashboardWonItem from './DashboardWonItem';
 import { useDashboard, tabs } from '../hooks/useDashboard';
 import './DashboardComp.css';
-import { Link } from 'react-router-dom';
 import AuctionCard from './AuctionCard';
 import { useFavorites } from '../hooks/useFavorites';
 
@@ -15,13 +11,7 @@ export default function DashboardComp() {
   const {
     activeTab,
     setActiveTab,
-    liveStreams,
-    isLoadingLiveAuctions,
-    errorMessage,
-    myBids,
-    wonAuctions,
-    handleCreateAuction,
-    handleViewAuction
+    myBids
   } = useDashboard();
 
   const { favorites } = useFavorites();
@@ -50,7 +40,7 @@ export default function DashboardComp() {
           <h1>
             My <span>Dashboard</span>
           </h1>
-          <p>Manage your live auctions, bids, and winnings</p>
+          <p>Manage your favorite auctions and bids</p>
         </div>
       </header>
 
@@ -60,21 +50,13 @@ export default function DashboardComp() {
         <div className="dashboard-content">
           {activeTab === 'favorites'
             ? renderFavoriteAuctions()
-            : activeTab === 'bids'
-              ? myBids.map((item, index) => (
-                  <DashboardBidItem
-                    key={item.id}
-                    item={item}
-                    imageVariant={index + 1}
-                  />
-                ))
-              : wonAuctions.map((item, index) => (
-                  <DashboardWonItem
-                    key={item.id}
-                    item={item}
-                    imageVariant={index + 1}
-                  />
-                ))}
+            : myBids.map((item, index) => (
+                <DashboardBidItem
+                  key={item.id}
+                  item={item}
+                  imageVariant={index + 1}
+                />
+              ))}
         </div>
       </section>
     </PageContainer>
