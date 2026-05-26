@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import './Navbar.css';
 import Button from './Button';
@@ -16,6 +17,8 @@ function Navbar() {
   const { user } = useAuth();
   const { executeLogout, loading: isLoggingOut } = useLogout();
   const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
+
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   return (
     <header className="navbar-wrap">
@@ -49,27 +52,53 @@ function Navbar() {
             </>
           ) : (
             <div className="navbar__user-group">
-              <button type="button" className="navbar__user" onClick={() => navigate('/profile')}>
-              <span className="navbar__bell" aria-hidden="true"></span>
-              {user.photoURL ? (
-                <img src={user.photoURL} alt={displayName} className="navbar__avatar" />
-              ) : (
-                <span className="navbar__avatar navbar__avatar--fallback" aria-hidden="true">
-                  {displayName.slice(0, 1).toUpperCase()}
-                </span>
-              )}
-              <span className="navbar__user-name">{displayName}</span>
-              <span aria-hidden="true">▾</span>
-            </button>
+              <div className="navbar__user-menu">
+                <button
+                  type="button"
+                  className="navbar__user-trigger"
+                  onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                >
+                  <span>Hello, {displayName}</span>
+                  <span
+                    className={`navbar__user-arrow ${
+                      isUserMenuOpen ? 'navbar__user-arrow--open' : ''
+                    }`}
+                    aria-hidden="true"
+                  >
+                    ▾
+                  </span>
+                </button>
 
-            <button 
-                type="button" 
-                className="navbar__logout-btn" 
-                onClick={executeLogout}
-                disabled={isLoggingOut}
-              >
-                {isLoggingOut ? '...' : 'Sign Out'}
-              </button>
+                {isUserMenuOpen && (
+                  <div className="navbar__user-dropdown">
+                    <Link
+                      to="/profile"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      Profile
+                    </Link>
+
+                    <Link
+                      to="/settings"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      Settings
+                    </Link>
+
+                    <button
+                      type="button"
+                      className="navbar__dropdown-logout"
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        executeLogout();
+                      }}
+                      disabled={isLoggingOut}
+                    >
+                      {isLoggingOut ? 'Signing out...' : 'Sign Out'}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
             
           )}
