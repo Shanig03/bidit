@@ -47,6 +47,7 @@ export function useGoLive() {
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+
   async function handleStartAuction(event) {
     event.preventDefault();
     setServerError('');
