@@ -39,7 +39,9 @@ function AuctionCard({ auction }) {
         </div>
       </div>
       <div className="auction-card__body">
-        <p className="auction-card__host">Hosted by {auction.seller || 'Unknown'}</p>
+        <p className="auction-card__host">
+          Hosted by {auction.sellerName || auction.seller || auction.sellerEmail || 'Unknown Seller'}
+        </p>
         <p className="auction-card__category">{auction.category}</p>
         <h3>{auction.title}</h3>
         
