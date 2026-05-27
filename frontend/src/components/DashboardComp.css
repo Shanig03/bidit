@@ -87,3 +87,18 @@
     grid-template-columns: 1fr;
   }
 }
+
+.dashboard-message {
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: #fff;
+  padding: 1rem;
+  color: #2a335c;
+  font-weight: 700;
+}
+
+.dashboard-message--error {
+  color: #b42318;
+  background: #fff3f6;
+  border-color: #fda4af;
+}

@@ -11,7 +11,9 @@ export default function DashboardComp() {
   const {
     activeTab,
     setActiveTab,
-    myBids
+    myBids,
+    isLoadingBids,
+    bidsError,
   } = useDashboard();
 
   const { favorites } = useFavorites();
@@ -33,6 +35,28 @@ export default function DashboardComp() {
     );
   }
 
+  function renderMyBids() {
+    if (isLoadingBids) {
+      return <p className="dashboard-message">Loading your bids...</p>;
+    }
+
+    if (bidsError) {
+      return <p className="dashboard-message dashboard-message--error">{bidsError}</p>;
+    }
+
+    if (myBids.length === 0) {
+      return <p className="dashboard-message">You have not placed any bids yet.</p>;
+    }
+
+    return myBids.map((item, index) => (
+      <DashboardBidItem
+        key={item.id}
+        item={item}
+        imageVariant={(index % 2) + 1}
+      />
+    ));
+  }
+
   return (
     <PageContainer className="dashboard-page">
       <header className="dashboard-header">
@@ -50,13 +74,8 @@ export default function DashboardComp() {
         <div className="dashboard-content">
           {activeTab === 'favorites'
             ? renderFavoriteAuctions()
-            : myBids.map((item, index) => (
-                <DashboardBidItem
-                  key={item.id}
-                  item={item}
-                  imageVariant={index + 1}
-                />
-              ))}
+            : renderMyBids()
+          }
         </div>
       </section>
     </PageContainer>
