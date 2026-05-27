@@ -6,7 +6,7 @@ function normalizeStatus(status) {
   return String(status || '').trim().toUpperCase();
 }
 
-function BidPanel({ auction, currentBid, watchers = 0, onPlaceBid }) {
+function BidPanel({ auction, currentBid, watchers = 0, onPlaceBid, favoriteButton }) {
   const {
     displayCurrentBid,
     displayStartingPrice,
@@ -89,9 +89,7 @@ function BidPanel({ auction, currentBid, watchers = 0, onPlaceBid }) {
           {isSubmitting ? 'Placing Bid...' : 'Place Bid'}
         </Button>
 
-        <button type="button" className="bid-heart">
-          ♡
-        </button>
+        {favoriteButton}
       </div>
 
       <div className="bid-stats">

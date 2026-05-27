@@ -1,47 +1,58 @@
 import PageContainer from './PageContainer';
-import Button from './Button';
 import DashboardTabs from './DashboardTabs';
-import DashboardLiveStreamItem from './DashboardLiveStreamItem';
 import DashboardBidItem from './DashboardBidItem';
-import DashboardWonItem from './DashboardWonItem';
 import { useDashboard, tabs } from '../hooks/useDashboard';
 import './DashboardComp.css';
-import { Link } from 'react-router-dom';
+import AuctionCard from './AuctionCard';
+import { useFavorites } from '../hooks/useFavorites';
 
 
 export default function DashboardComp() {
   const {
     activeTab,
     setActiveTab,
-    liveStreams,
-    isLoadingLiveAuctions,
-    errorMessage,
     myBids,
-    wonAuctions,
-    handleCreateAuction,
-    handleViewAuction
+    isLoadingBids,
+    bidsError,
   } = useDashboard();
 
-  function renderLiveAuctions() {
-    if (isLoadingLiveAuctions) {
-      return <p className="dashboard-message">Loading live auctions...</p>;
+  const { favorites } = useFavorites();
+
+  function renderFavoriteAuctions() {
+    if (favorites.length === 0) {
+      return <p className="dashboard-message">No favorite auctions yet.</p>;
     }
 
-    if (errorMessage) {
-      return <p className="dashboard-message dashboard-error">{errorMessage}</p>;
+    return (
+      <div className="dashboard-favorites-grid">
+        {favorites.map((auction) => (
+          <AuctionCard
+            key={auction.id || auction.auctionId}
+            auction={auction}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  function renderMyBids() {
+    if (isLoadingBids) {
+      return <p className="dashboard-message">Loading your bids...</p>;
     }
 
-    if (liveStreams.length === 0) {
-      return <p className="dashboard-message">No live auctions yet.</p>;
+    if (bidsError) {
+      return <p className="dashboard-message dashboard-message--error">{bidsError}</p>;
     }
 
-    return liveStreams.map((item, index) => (
-      <DashboardLiveStreamItem
+    if (myBids.length === 0) {
+      return <p className="dashboard-message">You have not placed any bids yet.</p>;
+    }
+
+    return myBids.map((item, index) => (
+      <DashboardBidItem
         key={item.id}
         item={item}
-        imageVariant={index + 1}
-        onViewStream={() => handleViewAuction(item.id)}
-        onManage={() => handleViewAuction(item.id)}
+        imageVariant={(index % 2) + 1}
       />
     ));
   }
@@ -53,7 +64,7 @@ export default function DashboardComp() {
           <h1>
             My <span>Dashboard</span>
           </h1>
-          <p>Manage your live auctions, bids, and winnings</p>
+          <p>Manage your favorite auctions and bids</p>
         </div>
       </header>
 
@@ -61,23 +72,10 @@ export default function DashboardComp() {
         <DashboardTabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
         <div className="dashboard-content">
-          {activeTab === 'live'
-            ? renderLiveAuctions()
-            : activeTab === 'bids'
-              ? myBids.map((item, index) => (
-                  <DashboardBidItem
-                    key={item.id}
-                    item={item}
-                    imageVariant={index + 1}
-                  />
-                ))
-              : wonAuctions.map((item, index) => (
-                  <DashboardWonItem
-                    key={item.id}
-                    item={item}
-                    imageVariant={index + 1}
-                  />
-                ))}
+          {activeTab === 'favorites'
+            ? renderFavoriteAuctions()
+            : renderMyBids()
+          }
         </div>
       </section>
     </PageContainer>

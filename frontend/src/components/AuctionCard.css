@@ -12,10 +12,6 @@
     position: relative;
 }
 
-.auction-card__meta div:nth-child(2) strong {
-    font-size: 1.65rem;
-}
-
 .auction-card__meta div:nth-child(2) {
     text-align: right; 
 }
@@ -98,13 +94,25 @@
 
 .auction-card__meta strong {
     color: #5b4cff;
-    font-size: 1.8rem;
+    font-size: 1.2rem;
 }
 
 .auction-card__cta {
     width: 100%;
     margin-top: 0.75rem;
 }
-.auction-card__image{position:relative;overflow:hidden;}
-.auction-card__image-el{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
-.auction-card__top{position:relative;z-index:2;}
+
+.auction-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.auction-card__join-link {
+  flex: 1;
+  text-decoration: none;
+}
+.auction-card__actions .auction-card__cta {
+  margin-top: 0;
+}

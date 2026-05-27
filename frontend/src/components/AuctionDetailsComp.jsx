@@ -7,6 +7,8 @@ import LiveChat from './LiveChat';
 import ProductDescription from './ProductDescription';
 import { useAuctionDetails } from '../hooks/useAuctionDetails';
 import './AuctionDetailsComp.css';
+import FavoriteButton from './FavoriteButton';
+import { useFavorites } from '../hooks/useFavorites';
 
 export default function AuctionDetailsComp() {
   const navigate = useNavigate();
@@ -19,6 +21,8 @@ export default function AuctionDetailsComp() {
     errorMessage,
     handlePlaceBid,
   } = useAuctionDetails();
+
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   if (isLoading) {
     return (
@@ -43,6 +47,23 @@ export default function AuctionDetailsComp() {
       </PageContainer>
     );
   }
+
+  const auctionId = auction.id || auction.auctionId;
+
+  const isEnded =
+    auction.status === 'ENDED' ||
+    auction.status === 'Ended' ||
+    (auction.endsAt && new Date(auction.endsAt) <= new Date());
+
+  const isAuctionFavorite = isFavorite(auctionId);
+
+  const favoriteButton = (
+    <FavoriteButton
+      active={isAuctionFavorite}
+      disabled={isEnded && !isAuctionFavorite}
+      onClick={() => toggleFavorite(auction)}
+    />
+  );
 
   const startTimestamp = auction.startsAt || auction.startTime;
   const isUpcoming = startTimestamp && new Date(startTimestamp) > new Date();
@@ -81,6 +102,7 @@ export default function AuctionDetailsComp() {
             watchers={auction.watchers}
             auction={auction}
             onPlaceBid={handlePlaceBid}
+            favoriteButton={favoriteButton}
           />
           <RecentBids bids={bids} />
         </div>
