@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import Button from './Button';
 import { useCountdown } from '../hooks/useCountdown';
 import { useImageViewUrl } from '../hooks/useImageViewUrl';
@@ -14,7 +15,13 @@ function AuctionCard({ auction }) {
 
   const { imageUrl: presignedImageUrl, isLoadingImage } = useImageViewUrl(auction?.imageKey);
 
-  const imageSrc = presignedImageUrl || auction?.imageUrl || '';
+  const imageSrc = (presignedImageUrl || auction?.imageUrl || '').trim();
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [imageSrc]);
+  
   const auctionId = auction.auctionId || auction.id;
   const displayPrice = auction?.currentPrice ?? auction?.currentBid ?? auction?.startingPrice ?? 0;
 
@@ -38,16 +45,17 @@ function AuctionCard({ auction }) {
     <article className="auction-card">
       <div className="auction-card__image">
         {isLoadingImage ? (
-          <div className="auction-card__image-placeholder">Loading image...</div>
-        ) : imageSrc ? (
-          <img
-            src={imageSrc}
-            alt={auction.title || 'Auction item'}
-            className="auction-card__image-el"
-          />
-        ) : (
-          <div className="auction-card__image-placeholder"></div>
-        )}
+            <div className="auction-card__image-placeholder" />
+          ) : imageSrc && !imageFailed ? (
+            <img
+              src={imageSrc}
+              alt={auction.title || 'Auction item'}
+              className="auction-card__image-el"
+              onError={() => setImageFailed(true)}
+            />
+          ) : (
+            <div className="auction-card__image-placeholder" />
+          )}
 
         <div className="auction-card__top">
           <span className={`auction-card__badge ${isUpcoming ? 'auction-card__badge--upcoming' : ''}`}>
