@@ -1,70 +1,78 @@
-const FAVORITES_STORAGE_PREFIX = 'bidit:favorites';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-function getStorageKey(userId) {
-  return `${FAVORITES_STORAGE_PREFIX}:${userId || 'guest'}`;
+function normalizeFavoritesResponse(data) {
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  return data.favorites || data.items || data.favoriteAuctions || data.auctions || [];
 }
 
 export async function getFavoriteAuctions(userId) {
-  const savedFavorites = localStorage.getItem(getStorageKey(userId));
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/favorites`);
+  const data = await response.json();
 
-  if (!savedFavorites) {
-    return [];
+  if (!response.ok) {
+    throw new Error(data.error || data.message || 'Failed to fetch favorite auctions');
   }
 
-  try {
-    return JSON.parse(savedFavorites);
-  } catch {
-    return [];
-  }
+  const favorites = normalizeFavoritesResponse(data);
+
+  return favorites.map((auction) => ({
+    ...auction,
+    id: auction.id || auction.auctionId,
+    auctionId: auction.auctionId || auction.id,
+    currentBid: auction.currentBid ?? auction.currentPrice,
+    currentPrice: auction.currentPrice ?? auction.currentBid,
+  }));
 }
 
 export async function addFavoriteAuction(userId, auction) {
-  const favorites = await getFavoriteAuctions(userId);
-  const auctionId = auction.id || auction.auctionId;
+  const auctionId = auction.auctionId || auction.id;
 
-  const alreadyExists = favorites.some(
-    (favorite) => (favorite.id || favorite.auctionId) === auctionId
-  );
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/favorites`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      auctionId,
+      auction,
+    }),
+  });
 
-  if (alreadyExists) {
-    return favorites;
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to add favorite auction');
   }
 
-  const favoriteAuction = {
-    ...auction,
-    id: auctionId,
-    auctionId,
-    savedAt: new Date().toISOString(),
-  };
-
-  const nextFavorites = [...favorites, favoriteAuction];
-
-  localStorage.setItem(getStorageKey(userId), JSON.stringify(nextFavorites));
-
-  return nextFavorites;
+  return getFavoriteAuctions(userId);
 }
 
 export async function removeFavoriteAuction(userId, auctionId) {
-  const favorites = await getFavoriteAuctions(userId);
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/favorites/${auctionId}`, {
+    method: 'DELETE',
+  });
 
-  const nextFavorites = favorites.filter(
-    (favorite) => (favorite.id || favorite.auctionId) !== auctionId
-  );
+  const data = await response.json();
 
-  localStorage.setItem(getStorageKey(userId), JSON.stringify(nextFavorites));
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to remove favorite auction');
+  }
 
-  return nextFavorites;
+  return getFavoriteAuctions(userId);
 }
 
 export async function toggleFavoriteAuction(userId, auction) {
   const favorites = await getFavoriteAuctions(userId);
-  const auctionId = auction.id || auction.auctionId;
+  const auctionId = auction.auctionId || auction.id;
 
-  const alreadyExists = favorites.some(
-    (favorite) => (favorite.id || favorite.auctionId) === auctionId
+  const alreadyFavorite = favorites.some(
+    (favorite) => (favorite.auctionId || favorite.id) === auctionId
   );
 
-  if (alreadyExists) {
+  if (alreadyFavorite) {
     return removeFavoriteAuction(userId, auctionId);
   }
 
