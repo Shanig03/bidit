@@ -20,6 +20,26 @@ export default function LiveAuctionsComp() {
     errorMessage
   } = useLiveAuctions();
 
+  // 1. Filter out ENDED, then sort LIVE to the top
+  const displayAuctions = filteredAuctions
+    .filter((auction) => {
+      // Keep only LIVE and Upcoming (checking for both spellings just in case)
+      const status = auction.status?.toUpperCase();
+      return status === 'LIVE' || status === 'UPCOMING' || status === 'UPCOMMING';
+    })
+    .sort((a, b) => {
+      const statusA = a.status?.toUpperCase();
+      const statusB = b.status?.toUpperCase();
+
+      // If A is LIVE and B is not, A moves up
+      if (statusA === 'LIVE' && statusB !== 'LIVE') return -1;
+      // If B is LIVE and A is not, B moves up
+      if (statusA !== 'LIVE' && statusB === 'LIVE') return 1;
+      
+      // Optional: If they have the same status, you could sort by start time here
+      return 0; 
+    });
+
   return (
     <PageContainer className="live-page">
       <section className="live-hero card">
@@ -60,13 +80,14 @@ export default function LiveAuctionsComp() {
       
       {errorMessage && <p className="live-message live-error">{errorMessage}</p>}
       
-      {!isLoading && !errorMessage && filteredAuctions.length === 0 && (
-        <p className="live-message">No live auctions found.</p>
+      {!isLoading && !errorMessage && displayAuctions.length === 0 && (
+        <p className="live-message">No live or upcoming auctions found.</p>
       )}
 
-      {!isLoading && !errorMessage && filteredAuctions.length > 0 && (
+      {/* 2. Map over your new displayAuctions array */}
+      {!isLoading && !errorMessage && displayAuctions.length > 0 && (
         <section className="live-grid">
-          {filteredAuctions.map((auction, index) => (
+          {displayAuctions.map((auction) => (
             <AuctionCard
               key={auction.id}
               auction={auction}
