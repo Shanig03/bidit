@@ -1,18 +1,24 @@
 import { Link } from 'react-router-dom';
 import Button from './Button';
 import { useCountdown } from '../hooks/useCountdown';
+import { useImageViewUrl } from '../hooks/useImageViewUrl';
 import './AuctionCard.css';
 import FavoriteButton from './FavoriteButton';
 import { useFavorites } from '../hooks/useFavorites';
 
 // Updated display logic within the component
 function AuctionCard({ auction }) {
-  const startTimestamp = auction.startsAt || auction.startTime;
+  const startTimestamp = auction?.startsAt || auction?.startTime;
   const isUpcoming = startTimestamp && new Date(startTimestamp) > new Date();
-  const timeLeft = useCountdown(auction.endsAt, isUpcoming);
+  const timeLeft = useCountdown(auction?.endsAt, isUpcoming);
+
+  const { imageUrl: presignedImageUrl, isLoadingImage } = useImageViewUrl(auction?.imageKey);
+
+  const imageSrc = presignedImageUrl || auction?.imageUrl || '';
+  const auctionId = auction.auctionId || auction.id;
+  const displayPrice = auction?.currentPrice ?? auction?.currentBid ?? auction?.startingPrice ?? 0;
 
   const { isFavorite, toggleFavorite } = useFavorites();
-  const auctionId = auction.id || auction.auctionId;
   const isEnded = timeLeft === 'Ended' || auction.status === 'ENDED';
   const isAuctionFavorite = isFavorite(auctionId);
 
@@ -27,37 +33,53 @@ function AuctionCard({ auction }) {
     });
   };
 
+
   return (
     <article className="auction-card">
       <div className="auction-card__image">
+        {isLoadingImage ? (
+          <div className="auction-card__image-placeholder">Loading image...</div>
+        ) : imageSrc ? (
+          <img
+            src={imageSrc}
+            alt={auction.title || 'Auction item'}
+            className="auction-card__image-el"
+          />
+        ) : (
+          <div className="auction-card__image-placeholder"></div>
+        )}
+
         <div className="auction-card__top">
-          {/* Badge Label: Updated to "Upcoming" */}
           <span className={`auction-card__badge ${isUpcoming ? 'auction-card__badge--upcoming' : ''}`}>
-            {isUpcoming ? 'Upcoming' : (timeLeft === 'Ended' ? 'Ended' : 'LIVE')}
+            {isUpcoming ? 'Upcoming' : isEnded ? 'Ended' : 'LIVE'}
           </span>
+
           <span className="auction-card__viewers">👁 {auction.watchers || 0}</span>
         </div>
       </div>
+
       <div className="auction-card__body">
         <p className="auction-card__host">
           Hosted by {auction.sellerName || auction.seller || auction.sellerEmail || 'Unknown Seller'}
         </p>
         <p className="auction-card__category">{auction.category}</p>
+
         <h3>{auction.title}</h3>
-        
+
+        <p className="auction-card__desc">
+          {auction.description || `${auction.category || 'Auction'} item`}
+        </p>
+
         <div className="auction-card__meta">
           <div>
-            {/* Dynamic Price Label: Starting Price vs Current Bid */}
             <span>{isUpcoming ? 'Starting Price' : 'Current Bid'}</span>
-            <strong>${auction.currentBid ?? auction.startingPrice}</strong>
+            <strong>${displayPrice}</strong>
           </div>
+
           <div>
             <span>{isUpcoming ? 'Starts At' : 'Time left'}</span>
             <strong>
-              {/* Full Date + Time display */}
-              {isUpcoming && startTimestamp
-                ? formatDateTime(startTimestamp) 
-                : timeLeft}
+              {isUpcoming && startTimestamp ? formatDateTime(startTimestamp) : timeLeft}
             </strong>
           </div>
         </div>

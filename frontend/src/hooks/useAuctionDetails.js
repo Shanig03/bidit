@@ -26,6 +26,7 @@ function mapApiAuctionToPageAuction(apiAuction) {
     highestBidderId: apiAuction.highestBidderId,
     highestBidderEmail: apiAuction.highestBidderEmail,
     imageUrl: apiAuction.imageUrl,
+    imageKey: apiAuction.imageKey,
     agoraChannelName: apiAuction.agoraChannelName,
   };
 }
