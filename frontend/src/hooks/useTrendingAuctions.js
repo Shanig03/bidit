@@ -9,7 +9,9 @@ function mapAuctionToHomeAuction(auction) {
     title: auction.title,
     description: auction.description,
     category: auction.category || 'General',
-    seller: auction.sellerId || 'Bidit seller',
+    seller: auction.sellerName || auction.seller || auction.sellerEmail || auction.sellerId || 'Bidit seller',
+    sellerName: auction.sellerName,
+    sellerEmail: auction.sellerEmail,
     sellerId: auction.sellerId,
     currentBid: auction.currentPrice,
     currentPrice: auction.currentPrice,
@@ -17,7 +19,8 @@ function mapAuctionToHomeAuction(auction) {
     bidCount: auction.bidCount || 0,
     status: auction.status,
     endsAt: auction.endsAt,
-    imageUrl: auction.imageUrl,
+    imageUrl: auction.imageUrl || '',
+    imageKey: auction.imageKey || '',
   };
 }
 

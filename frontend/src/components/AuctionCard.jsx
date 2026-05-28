@@ -73,11 +73,9 @@ function AuctionCard({ auction }) {
         <p className="auction-card__category">{auction.category}</p>
 
         <h3>{auction.title}</h3>
-
         <p className="auction-card__desc">
-          {auction.description || `${auction.category || 'Auction'} item`}
+          {auction.description?.trim() || ''}
         </p>
-
         <div className="auction-card__meta">
           <div>
             <span>{isUpcoming ? 'Starting Price' : 'Current Bid'}</span>

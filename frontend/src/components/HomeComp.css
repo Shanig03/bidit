@@ -217,6 +217,19 @@
     }
 }
 
+.home-auction-image {
+  position: relative;
+  overflow: hidden;
+}
+
+.home-auction-image__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 @media (max-width: 640px) {
     .home-hero {
         padding: 1.35rem 1rem;
