@@ -2,7 +2,8 @@ import Button from './Button';
 import { useBidPanel } from '../hooks/useBidPanel';
 import './BidPanel.css';
 
-function BidPanel({ auction, currentBid, watchers = 0, onPlaceBid }) {
+// 1. Rename 'watchers' to 'liveViewers' for clarity
+function BidPanel({ auction, currentBid, liveViewers = 0, onPlaceBid }) {
   const {
     displayCurrentBid,
     displayStartingPrice,
@@ -14,7 +15,7 @@ function BidPanel({ auction, currentBid, watchers = 0, onPlaceBid }) {
     successMessage,
     isSubmitting,
     handleSubmitBid,
-  } = useBidPanel(auction, currentBid, watchers, onPlaceBid);
+  } = useBidPanel(auction, currentBid, liveViewers, onPlaceBid); // 2. Pass it into your hook
 
   return (
     <section className="bid-panel card">

@@ -27,7 +27,7 @@ function AuctionCard({ auction }) {
           <span className={`auction-card__badge ${isUpcoming ? 'auction-card__badge--upcoming' : ''}`}>
             {isUpcoming ? 'Upcoming' : (timeLeft === 'Ended' ? 'Ended' : 'LIVE')}
           </span>
-          <span className="auction-card__viewers">👁 {auction.watchers || 0}</span>
+          <span className="auction-card__viewers">👁 {auction.viewers || auction.watchers || 0}</span>
         </div>
       </div>
       <div className="auction-card__body">
