@@ -1,13 +1,19 @@
 import { Link } from 'react-router-dom';
 import Button from './Button';
 import { useCountdown } from '../hooks/useCountdown';
+// Import the shared custom hook to link the card logic cleanly
+import { useLiveViewerCount } from '../hooks/useLiveViewerCount';
 import './AuctionCard.css';
 
-// 1. Updated display logic within the component
 function AuctionCard({ auction }) {
   const startTimestamp = auction.startsAt || auction.startTime;
   const isUpcoming = startTimestamp && new Date(startTimestamp) > new Date();
   const timeLeft = useCountdown(auction.endsAt, isUpcoming);
+
+  // Consume the custom hook layer to retrieve dynamic real-time metrics
+  const targetId = auction.id || auction.auctionId;
+  const baselineCount = auction.viewers || auction.watchers || 0;
+  const liveViewerCount = useLiveViewerCount(targetId, baselineCount);
 
   // Helper for better date/time display
   const formatDateTime = (isoString) => {
@@ -23,11 +29,11 @@ function AuctionCard({ auction }) {
     <article className="auction-card">
       <div className="auction-card__image">
         <div className="auction-card__top">
-          {/* Badge Label: Updated to "Upcoming" */}
           <span className={`auction-card__badge ${isUpcoming ? 'auction-card__badge--upcoming' : ''}`}>
             {isUpcoming ? 'Upcoming' : (timeLeft === 'Ended' ? 'Ended' : 'LIVE')}
           </span>
-          <span className="auction-card__viewers">👁 {auction.viewers || auction.watchers || 0}</span>
+          {/* Render the lightweight dynamic state count */}
+          <span className="auction-card__viewers">👁 {liveViewerCount}</span>
         </div>
       </div>
       <div className="auction-card__body">
@@ -38,14 +44,12 @@ function AuctionCard({ auction }) {
 
         <div className="auction-card__meta">
           <div>
-            {/* Dynamic Price Label: Starting Price vs Current Bid */}
             <span>{isUpcoming ? 'Starting Price' : 'Current Bid'}</span>
             <strong>${auction.currentBid || auction.startingPrice}</strong>
           </div>
           <div>
             <span>{isUpcoming ? 'Starts At' : 'Time left'}</span>
             <strong>
-              {/* Full Date + Time display */}
               {isUpcoming && startTimestamp
                 ? formatDateTime(startTimestamp) 
                 : timeLeft}
