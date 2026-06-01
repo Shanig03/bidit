@@ -66,8 +66,6 @@ export default function HomeComp() {
   return (
     <PageContainer className="home-page">
       <section className="home-hero card">
-        <StatusBadge tone="neutral">Live Video Auctions</StatusBadge>
-
         <h1 className="home-title">
           Bid <span>live.</span>
           <br />
