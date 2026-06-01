@@ -27,7 +27,7 @@ export default function SignUpComp({ onSubmit, error, loading }) {
   return (
     <PageContainer className="signup-page">
       <section className="signup-shell">
-        <p className="signup-brand">📹 BidIt</p>
+        <p className="signup-brand">BidIt</p>
         <h1>Join BidIt Today</h1>
         <p className="signup-subtitle">Create an account to start bidding on live video auctions</p>
 
@@ -40,7 +40,6 @@ export default function SignUpComp({ onSubmit, error, loading }) {
 
           <label htmlFor="username">Username</label>
           <div className="signup-input-wrap">
-            <span>👤</span>
             <input
               id="username"
               type="text"
@@ -53,7 +52,6 @@ export default function SignUpComp({ onSubmit, error, loading }) {
 
           <label htmlFor="email">Email Address</label>
           <div className="signup-input-wrap">
-            <span>✉️</span>
             <input
               id="email"
               type="email"
@@ -66,7 +64,6 @@ export default function SignUpComp({ onSubmit, error, loading }) {
 
           <label htmlFor="password">Password</label>
           <div className="signup-input-wrap">
-            <span>🔒</span>
             <input
               id="password"
               type="password"
@@ -79,7 +76,6 @@ export default function SignUpComp({ onSubmit, error, loading }) {
 
           <label htmlFor="confirmPassword">Confirm Password</label>
           <div className="signup-input-wrap">
-            <span>🔒</span>
             <input
               id="confirmPassword"
               type="password"

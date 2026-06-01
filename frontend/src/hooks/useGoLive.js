@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { createAuction } from '../api/auctionsService';
+import { createAuction, updateAuction } from '../api/auctionsService';
+import { uploadImage } from '../api/uploadService';
 
 export const durationOptions = [
   { label: '24 hours', hours: 24 },
@@ -37,10 +38,15 @@ export function useGoLive() {
   const [duration, setDuration] = useState('24 hours');
   const [startTime, setStartTime] = useState(''); // 👈 New state for date/time
   const [streamQuality, setStreamQuality] = useState('720p Standard Definition');
+
+  const [productImageFile, setProductImageFile] = useState(null);
+  const [productImagePreviewUrl, setProductImagePreviewUrl] = useState('');
+  const [productImageError, setProductImageError] = useState('');
   
   const [serverError, setServerError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   async function handleStartAuction(event) {
     event.preventDefault();
@@ -68,19 +74,38 @@ export function useGoLive() {
       const isScheduled = startDateTime > new Date();
 
       const result = await createAuction({
-        sellerId: user.uid, 
-        sellerName: user.displayName || 'Unknown Seller',
+        sellerId: user.uid,
+        sellerName: user.displayName || user.email?.split('@')[0] || 'Unknown Seller',
+        sellerEmail: user.email || '',
         title: title.trim(),
         description: description.trim(),
         category,
         startingPrice: Number(startingPrice),
-        startsAt: new Date(startTime).toISOString(), 
-        endsAt: calculateEndsAt(startTime, duration), 
+        startsAt: new Date(startTime).toISOString(),
+        endsAt: calculateEndsAt(startTime, duration),
         imageUrl: '',
+        imageKey: '',
         agoraChannelName: `auction-${Date.now()}`,
         videoProfile: selectedAgoraProfile,
         status: isScheduled ? 'UPCOMING' : 'LIVE'
       });
+
+      const createdAuctionId = result?.auction?.auctionId;
+
+      if (productImageFile && createdAuctionId) {
+        const uploadedImageKey = await uploadImage({
+          uploadType: 'auction',
+          file: productImageFile,
+          userId: user.uid,
+          auctionId: createdAuctionId,
+        });
+
+        if (!uploadedImageKey) {
+          throw new Error('Image upload failed. Please try again.');
+        }
+
+        await updateAuction(createdAuctionId, { imageKey: uploadedImageKey });
+      }
 
       setSuccessMessage('Auction scheduled successfully.');
       if (isScheduled) {
@@ -95,6 +120,47 @@ export function useGoLive() {
     }
   }
 
+
+  function handleProductImageSelect(file, validationError = '') {
+    setProductImageError(validationError);
+
+    if (validationError || !file) {
+      if (productImagePreviewUrl) {
+        URL.revokeObjectURL(productImagePreviewUrl);
+      }
+
+      setProductImageFile(null);
+      setProductImagePreviewUrl('');
+      return;
+    }
+
+    if (productImagePreviewUrl) {
+      URL.revokeObjectURL(productImagePreviewUrl);
+    }
+
+    const nextPreviewUrl = URL.createObjectURL(file);
+    setProductImageFile(file);
+    setProductImagePreviewUrl(nextPreviewUrl);
+  }
+
+  function handleRemoveProductImage() {
+    if (productImagePreviewUrl) {
+      URL.revokeObjectURL(productImagePreviewUrl);
+    }
+
+    setProductImageFile(null);
+    setProductImagePreviewUrl('');
+    setProductImageError('');
+  }
+
+  useEffect(() => {
+    return () => {
+      if (productImagePreviewUrl) {
+        URL.revokeObjectURL(productImagePreviewUrl);
+      }
+    };
+  }, [productImagePreviewUrl]);
+
   function handleCancel() {
     navigate('/dashboard');
   }
@@ -107,7 +173,9 @@ export function useGoLive() {
     duration, setDuration,
     startTime, setStartTime, 
     streamQuality, setStreamQuality,
+    productImageFile, productImagePreviewUrl, productImageError,
     serverError, successMessage, isSubmitting,
+    handleProductImageSelect, handleRemoveProductImage,
     handleStartAuction, handleCancel
   };
 }

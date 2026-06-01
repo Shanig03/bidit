@@ -5,17 +5,29 @@ import AuctionCard from './AuctionCard';
 import { useLiveAuctions } from '../hooks/useLiveAuctions';
 import './LiveAuctionsComp.css';
 
-const categories = ['All', 'Photography', 'Fashion', 'Music', 'Collectibles', 'Books', 'Electronics'];
+const categories = [
+  'All',
+  'Electronics',
+  'Fashion',
+  'Jewelry',
+  'Collectibles',
+  'Art',
+  'Home',
+  'Beauty',
+  'Books',
+  'Sports',
+  'Toys'
+  ];
 
 export default function LiveAuctionsComp() {
   const {
     filteredAuctions,
     liveAuctionsCount,
-    totalAuctions,
     searchTerm,
     setSearchTerm,
-    selectedCategory,
-    setSelectedCategory,
+    selectedCategories,
+    toggleCategory,
+    clearCategories,
     isLoading,
     errorMessage
   } = useLiveAuctions();
@@ -41,32 +53,40 @@ export default function LiveAuctionsComp() {
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
           />
-          <button type="button">Filters</button>
+          <button type="button">Search</button>
         </div>
 
         <div className="live-chip-row">
           {categories.map((category) => (
             <CategoryChip
-              key={category}      
+              key={category}
               label={category}
-              active={selectedCategory === category}
-              onClick={() => setSelectedCategory(category)}
+              active={
+                category === 'All'
+                  ? selectedCategories.length === 0
+                  : selectedCategories.includes(category)
+              }
+              onClick={() =>
+                category === 'All'
+                  ? clearCategories()
+                  : toggleCategory(category)
+              }
             />
           ))}
         </div>
       </section>
 
       {isLoading && <p className="live-message">Loading live auctions...</p>}
-      
+
       {errorMessage && <p className="live-message live-error">{errorMessage}</p>}
-      
+
       {!isLoading && !errorMessage && filteredAuctions.length === 0 && (
         <p className="live-message">No live auctions found.</p>
       )}
 
       {!isLoading && !errorMessage && filteredAuctions.length > 0 && (
         <section className="live-grid">
-          {filteredAuctions.map((auction, index) => (
+          {filteredAuctions.map((auction) => (
             <AuctionCard
               key={auction.id}
               auction={auction}

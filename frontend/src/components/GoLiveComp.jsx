@@ -1,18 +1,35 @@
 import { durationOptions } from '../hooks/useGoLive';
+import ProductImageUploader from './ProductImageUploader';
 import './GoLiveComp.css';
 
 export default function GoLiveComp(props) {
-  const {
-    title, setTitle,
-    description, setDescription,
-    category, setCategory,
-    startingPrice, setStartingPrice,
-    duration, setDuration,
-    startTime, setStartTime,
-    streamQuality, setStreamQuality,
-    serverError, successMessage, isSubmitting,
-    handleStartAuction, handleCancel
-  } = props;
+    const {
+      title,
+      setTitle,
+      description,
+      setDescription,
+      category,
+      setCategory,
+      startingPrice,
+      setStartingPrice,
+      duration,
+      setDuration,
+      startTime,
+      setStartTime,
+      streamQuality,
+      setStreamQuality,
+      productImageFile,
+      productImagePreviewUrl,
+      productImageError,
+      serverError,
+      successMessage,
+      isSubmitting,
+      handleProductImageSelect,
+      handleRemoveProductImage,
+      handleStartAuction,
+      handleCancel,
+    } = props;
+   
 
   return (
     <div className="go-live-page">
@@ -61,9 +78,17 @@ export default function GoLiveComp(props) {
           <div className="upload-wrap">
             <label className="upload-title">Category</label>
             <select value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="Photography">Photography</option>
               <option value="Electronics">Electronics</option>
               <option value="Collectibles">Collectibles</option>
+              <option value="Fashion">Fashion</option>
+              <option value="Jewelry">Jewelry</option>
+              <option value="Art">Art</option>
+              <option value="Home">Home</option>
+              <option value="Beauty">Beauty</option>
+              <option value="Books">Books</option>
+              <option value="Sports">Sports</option>
+              <option value="Toys">Toys</option>
+              <option value="Other">Other</option>
             </select>
           </div>
         </div>
@@ -88,6 +113,16 @@ export default function GoLiveComp(props) {
             </select>
           </div>
         </div>
+
+
+        <ProductImageUploader
+          selectedFile={productImageFile}
+          previewUrl={productImagePreviewUrl}
+          onFileSelect={handleProductImageSelect}
+          onRemove={handleRemoveProductImage}
+          disabled={isSubmitting}
+          errorMessage={productImageError}
+        />
 
         {/* Using your specific stream-setup styling classes here */}
         <div className="stream-setup">

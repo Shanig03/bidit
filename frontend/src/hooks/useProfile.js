@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getUserProfile, updateUserProfile } from '../api/usersApi';
+import { uploadImage, getImageViewUrl } from '../api/uploadService';
 
 function getDisplayName(user) {
   if (!user) return 'User';
@@ -18,6 +19,7 @@ function getInitialProfile(user) {
     email,
     bio: 'No bio added yet.',
     photoURL: user?.photoURL || '',
+    profileImageKey: '',
     imageFile: null,
   };
 }
@@ -53,11 +55,19 @@ export function useProfile() {
         const dbUser = await getUserProfile(user.uid);
         const fallbackProfile = getInitialProfile(user);
 
+        const profileImageKey = dbUser.profileImageKey || '';
+        let photoURL = dbUser.photoURL || fallbackProfile.photoURL || '';
+
+        if (profileImageKey) {
+          photoURL = await getImageViewUrl(profileImageKey);
+        }
+
         const loadedProfile = {
           displayName: dbUser.displayName || fallbackProfile.displayName,
           email: dbUser.email || fallbackProfile.email,
           bio: dbUser.bio || 'No bio added yet.',
-          photoURL: dbUser.photoURL || fallbackProfile.photoURL,
+          photoURL,
+          profileImageKey,
           imageFile: null,
         };
 
@@ -121,6 +131,7 @@ export function useProfile() {
       ...currentData,
       imageFile: null,
       photoURL: '',
+      profileImageKey: '',
     }));
   }
 
@@ -145,27 +156,34 @@ export function useProfile() {
       setStatusMessage('');
       setErrorMessage('');
 
-      /*
-        Image note:
-        If imageFile exists, photoURL is currently only a local preview URL.
-        We should not save this preview URL to DynamoDB.
-        Later, with S3 Presigned URL, we will upload imageFile to S3
-        and save the permanent S3/CloudFront URL in DynamoDB.
-      */
-      const photoURLToSave = formData.imageFile ? profile.photoURL : formData.photoURL;
+      let profileImageKeyToSave = formData.profileImageKey || '';
+      let photoURLToShow = formData.photoURL || '';
+
+      if (formData.imageFile) {
+        const uploadedImageKey = await uploadImage({
+          uploadType: 'profile',
+          file: formData.imageFile,
+          userId: user.uid,
+        });
+
+        profileImageKeyToSave = uploadedImageKey;
+        photoURLToShow = await getImageViewUrl(uploadedImageKey);
+      }
 
       const updatedProfile = await updateUserProfile(user.uid, {
         displayName: cleanName,
         email: profile.email,
         bio: cleanBio,
-        photoURL: photoURLToSave || '',
+        profileImageKey: profileImageKeyToSave,
+        photoURL: '',
       });
 
       const nextProfile = {
         displayName: updatedProfile.displayName || cleanName,
         email: updatedProfile.email || profile.email,
         bio: updatedProfile.bio || 'No bio added yet.',
-        photoURL: updatedProfile.photoURL || '',
+        photoURL: photoURLToShow,
+        profileImageKey: updatedProfile.profileImageKey || profileImageKeyToSave,
         imageFile: null,
       };
 
