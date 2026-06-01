@@ -2,11 +2,12 @@ import Button from './Button';
 import { useBidPanel } from '../hooks/useBidPanel';
 import './BidPanel.css';
 
+// 1. Rename 'watchers' to 'liveViewers' for clarity
 function normalizeStatus(status) {
   return String(status || '').trim().toUpperCase();
 }
 
-function BidPanel({ auction, currentBid, watchers = 0, onPlaceBid, favoriteButton }) {
+function BidPanel({ auction, currentBid, liveViewers = 0, onPlaceBid, favoriteButton }) {
   const {
     displayCurrentBid,
     displayStartingPrice,
@@ -18,7 +19,7 @@ function BidPanel({ auction, currentBid, watchers = 0, onPlaceBid, favoriteButto
     successMessage,
     isSubmitting,
     handleSubmitBid,
-  } = useBidPanel(auction, currentBid, watchers, onPlaceBid);
+  } = useBidPanel(auction, currentBid, liveViewers, onPlaceBid); 
 
   const auctionStatus = normalizeStatus(auction?.status);
 

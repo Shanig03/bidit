@@ -20,6 +20,7 @@ export default function AuctionDetailsComp() {
     isLoading,
     errorMessage,
     handlePlaceBid,
+    liveViewers,
   } = useAuctionDetails();
 
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -91,7 +92,7 @@ export default function AuctionDetailsComp() {
     <PageContainer className="auction-details-page">
       <div className="ad-grid">
         <div className="ad-left">
-          <AuctionVideoPanel auction={auction} currentUserId={currentUserId}/>
+          <AuctionVideoPanel auction={auction} currentUserId={currentUserId} liveViewers={liveViewers}/>
           <LiveChat auctionId={auction.auctionId} />
           <ProductDescription auction={auction} />
         </div>
@@ -99,7 +100,7 @@ export default function AuctionDetailsComp() {
         <div className="ad-right">
           <BidPanel
             currentBid={auction.currentBid}
-            watchers={auction.watchers}
+            liveViewers={liveViewers}
             auction={auction}
             onPlaceBid={handlePlaceBid}
             favoriteButton={favoriteButton}

@@ -2,15 +2,21 @@ import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Button from './Button';
 import { useCountdown } from '../hooks/useCountdown';
+// Import the shared custom hook to link the card logic cleanly
+import { useLiveViewerCount } from '../hooks/useLiveViewerCount';
 import { useImageViewUrl } from '../hooks/useImageViewUrl';
 import './AuctionCard.css';
 import FavoriteButton from './FavoriteButton';
 import { useFavorites } from '../hooks/useFavorites';
 
-// Updated display logic within the component
+// 1. Updated display logic within the component
 function AuctionCard({ auction }) {
   const startTimestamp = auction?.startsAt || auction?.startTime;
   const isUpcoming = startTimestamp && new Date(startTimestamp) > new Date();
+  // Consume the custom hook layer to retrieve dynamic real-time metrics
+  const targetId = auction.id || auction.auctionId;
+  const baselineCount = auction.viewers || auction.watchers || 0;
+  const liveViewerCount = useLiveViewerCount(targetId, baselineCount);
   const timeLeft = useCountdown(auction?.endsAt, isUpcoming);
 
   const { imageUrl: presignedImageUrl, isLoadingImage } = useImageViewUrl(auction?.imageKey);
@@ -61,8 +67,8 @@ function AuctionCard({ auction }) {
           <span className={`auction-card__badge ${isUpcoming ? 'auction-card__badge--upcoming' : ''}`}>
             {isUpcoming ? 'Upcoming' : isEnded ? 'Ended' : 'LIVE'}
           </span>
-
-          <span className="auction-card__viewers">👁 {auction.watchers || 0}</span>
+          {/* Render the lightweight dynamic state count */}
+          <span className="auction-card__viewers">👁 {liveViewerCount}</span>
         </div>
       </div>
 
