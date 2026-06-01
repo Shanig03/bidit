@@ -2,7 +2,7 @@ import PageContainer from './PageContainer';
 import { useProfile } from '../hooks/useProfile';
 import './ProfileComp.css';
 
-function getInitials(name) {
+function getInitials(name = '') {
   return name
     .split(' ')
     .filter(Boolean)
@@ -50,7 +50,10 @@ export default function ProfileComp() {
             <div className="profile-edit-image-area">
               <div className="profile-edit-image-preview">
                 {formData.photoURL ? (
-                  <img src={formData.photoURL} alt={formData.displayName || 'Profile preview'} />
+                  <img
+                    src={formData.photoURL}
+                    alt={formData.displayName || 'Profile preview'}
+                  />
                 ) : (
                   <span>{getInitials(formData.displayName) || 'U'}</span>
                 )}
@@ -154,7 +157,11 @@ export default function ProfileComp() {
           <section className="profile-card card">
             <div className="profile-avatar-wrap">
               {profile.photoURL ? (
-                <img className="profile-avatar" src={profile.photoURL} alt={profile.displayName} />
+                <img
+                  className="profile-avatar"
+                  src={profile.photoURL}
+                  alt={profile.displayName}
+                />
               ) : (
                 <div className="profile-avatar profile-avatar--fallback" aria-hidden="true">
                   {getInitials(profile.displayName) || 'U'}
@@ -175,61 +182,25 @@ export default function ProfileComp() {
         </aside>
 
         <section className="profile-main-col">
-          <article className="card profile-panel profile-personal-info">
-            <div className="profile-panel__header">
-              <h3>Personal Information</h3>
-            </div>
-
-            <ul>
-              <li>
-                <span>Full Name</span>
-                <strong>{profile.displayName}</strong>
-              </li>
-
-              <li>
-                <span>Email Address</span>
-                <strong>{profile.email}</strong>
-              </li>
-
-              <li>
-                <span>Bio</span>
-                <strong>{profile.bio}</strong>
-              </li>
-
-              <li>
-                <span>Profile Image</span>
-                <strong>{profile.photoURL ? 'Custom image set' : 'No image uploaded'}</strong>
-              </li>
-            </ul>
-
-            {statusMessage && <p className="profile-success">{statusMessage}</p>}
-            {errorMessage && <p className="profile-error">{errorMessage}</p>}
-          </article>
-
-          <div className="profile-bottom-grid">
-            <article className="card profile-panel">
+          <div className="profile-activity-stack">
+            <article className="card profile-panel profile-auctions-won-panel">
               <div className="profile-panel__header">
                 <h3>Auctions Won</h3>
               </div>
 
-              <div className="profile-metric">
-                <strong>0</strong>
-                <span>Total auctions won</span>
+              <div className="profile-empty-state">
+                <p>You have not won any auctions yet.</p>
               </div>
-
-              <p className="profile-empty-text">
-                You have not won any auctions yet.
-              </p>
             </article>
 
-            <article className="card profile-panel">
+            <article className="card profile-panel profile-notifications-panel">
               <div className="profile-panel__header">
                 <h3>Notifications</h3>
               </div>
 
-              <p className="profile-empty-text">
-                No notifications yet.
-              </p>
+              <div className="profile-empty-state">
+                <p>No notifications yet.</p>
+              </div>
             </article>
           </div>
         </section>
