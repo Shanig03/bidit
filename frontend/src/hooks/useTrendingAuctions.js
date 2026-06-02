@@ -35,19 +35,16 @@ export function useTrendingAuctions() {
     async function loadTrendingAuctions() {
       try {
         setIsLoadingTrending(true);
-        setErrorMessage('');
 
         const apiAuctions = await getAuctions();
         const mappedAuctions = apiAuctions.map(mapAuctionToHomeAuction);
 
-        // 1. Filter for only 'LIVE' auctions
         const liveAuctions = mappedAuctions.filter(auction => auction.status === 'LIVE');
 
-        // 2. Sort by viewers descending (b - a)
-        const sortedByViewers = liveAuctions.sort((a, b) => b.viewers - a.viewers);
+        // ZERO COST: Sort by the number of bids (or currentPrice) instead of Firebase viewers
+        const sortedByActivity = liveAuctions.sort((a, b) => b.bidCount - a.bidCount);
 
-        // 3. Keep only the top 3
-        const top3Trending = sortedByViewers.slice(0, 3);
+        const top3Trending = sortedByActivity.slice(0, 3);
 
         setTrending(top3Trending);
       } catch (error) {
