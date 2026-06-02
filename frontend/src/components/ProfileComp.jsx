@@ -11,6 +11,18 @@ function getInitials(name = '') {
     .join('');
 }
 
+function formatWonDate(dateValue) {
+  if (!dateValue) return '';
+
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  return date.toLocaleDateString('en-GB');
+}
+
 export default function ProfileComp() {
   const {
     profile,
@@ -27,6 +39,8 @@ export default function ProfileComp() {
     handleRemoveImage,
     handleSaveProfile,
   } = useProfile();
+
+  const wonAuctions = Array.isArray(profile?.wonAuctions) ? profile.wonAuctions : [];
 
   if (isLoadingProfile) {
     return (
@@ -188,9 +202,32 @@ export default function ProfileComp() {
                 <h3>Auctions Won</h3>
               </div>
 
-              <div className="profile-empty-state">
-                <p>You have not won any auctions yet.</p>
-              </div>
+              {wonAuctions.length > 0 ? (
+                <div className="profile-won-list">
+                  {wonAuctions.map((auction) => (
+                    <div
+                      className="profile-won-item"
+                      key={auction.auctionId || auction.id || auction.title}
+                    >
+                      <div className="profile-won-item__details">
+                        <span>{auction.title || 'Auction item'}</span>
+
+                        {auction.wonAt && (
+                          <small>Won on {formatWonDate(auction.wonAt)}</small>
+                        )}
+                      </div>
+
+                      <strong>
+                        ${auction.winningBid ?? auction.currentPrice ?? auction.price ?? 0}
+                      </strong>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="profile-empty-state">
+                  <p>You have not won any auctions yet.</p>
+                </div>
+              )}
             </article>
 
             <article className="card profile-panel profile-notifications-panel">

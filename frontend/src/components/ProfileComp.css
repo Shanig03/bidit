@@ -421,3 +421,40 @@
     gap: 0.25rem;
   }
 }
+
+.profile-won-list {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.profile-won-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid #ece8f7;
+  background: #faf9ff;
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+}
+
+.profile-won-item span {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.profile-won-item strong {
+  color: #218a53;
+  font-size: 1.05rem;
+}
+
+.profile-won-item__details {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.profile-won-item__details small {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
