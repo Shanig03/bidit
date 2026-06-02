@@ -24,6 +24,8 @@ function mapApiAuctionToPageAuction(apiAuction) {
     createdAt: apiAuction.createdAt,
     bidCount: apiAuction.bidCount || 0,
     watchers: apiAuction.watchers || 0,
+    sellerName: apiAuction.sellerName,
+    sellerEmail: apiAuction.sellerEmail,
     sellerId: apiAuction.sellerId,
     highestBidderId: apiAuction.highestBidderId,
     highestBidderEmail: apiAuction.highestBidderEmail,
