@@ -6,6 +6,19 @@ import './DashboardComp.css';
 import AuctionCard from './AuctionCard';
 import { useFavorites } from '../hooks/useFavorites';
 
+function isAuctionEnded(auction) {
+  const status = auction?.status?.toUpperCase();
+
+  if (status === 'ENDED') {
+    return true;
+  }
+
+  if (auction?.endsAt) {
+    return new Date(auction.endsAt) <= new Date();
+  }
+
+  return false;
+}
 
 export default function DashboardComp() {
   const {
@@ -18,14 +31,16 @@ export default function DashboardComp() {
 
   const { favorites } = useFavorites();
 
+  const activeFavorites = favorites.filter((auction) => !isAuctionEnded(auction));
+
   function renderFavoriteAuctions() {
-    if (favorites.length === 0) {
-      return <p className="dashboard-message">No favorite auctions yet.</p>;
+    if (activeFavorites.length === 0) {
+      return <p className="dashboard-message">No active favorite auctions yet.</p>;
     }
 
     return (
       <div className="dashboard-favorites-grid">
-        {favorites.map((auction) => (
+        {activeFavorites.map((auction) => (
           <AuctionCard
             key={auction.id || auction.auctionId}
             auction={auction}
