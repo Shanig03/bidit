@@ -4,6 +4,8 @@ import Button from './Button';
 import StatusBadge from './StatusBadge';
 import { useTrendingAuctions } from '../hooks/useTrendingAuctions';
 import './HomeComp.css';
+import { useState, useEffect } from 'react';
+import { useImageViewUrl } from '../hooks/useImageViewUrl';
 
 const trustItems = ['Real-time bidding', 'Secure payments', 'Trusted community'];
 
@@ -13,14 +15,57 @@ const featureCards = [
   { title: 'Global Community', description: 'Connect with buyers and sellers worldwide.' },
 ];
 
+function HomeAuctionCard({ auction, index }) {
+  const { imageUrl: presignedImageUrl, isLoadingImage } = useImageViewUrl(auction?.imageKey);
+
+  const imageSrc = (presignedImageUrl || auction?.imageUrl || '').trim();
+  const auctionId = auction.auctionId || auction.id;
+  const sellerName = auction.sellerName || auction.seller || auction.sellerEmail || 'Unknown Seller';
+  const currentBid = auction.currentPrice ?? auction.currentBid ?? auction.startingPrice ?? 0;
+
+  return (
+    <article className="home-auction-card">
+      <div className={`home-auction-image home-auction-image--${index + 1}`}>
+        {!isLoadingImage && imageSrc && (
+          <img
+            src={imageSrc}
+            alt={auction.title || 'Auction item'}
+            className="home-auction-image__img"
+            onError={(event) => {
+              event.currentTarget.style.display = 'none';
+            }}
+          />
+        )}
+      </div>
+
+      <div className="home-auction-body">
+        <p className="home-auction-category">{auction.category}</p>
+
+        <h3>{auction.title}</h3>
+
+        <p className="home-auction-meta">Hosted by {sellerName}</p>
+
+        <div className="home-auction-bid">
+          <div>
+            <span>Current bid</span>
+            <strong>${currentBid}</strong>
+          </div>
+
+          <Link to={`/auction/${auctionId}`}>
+            <Button>Join Live Auction</Button>
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 export default function HomeComp() {
   const { trending, isLoadingTrending, errorMessage } = useTrendingAuctions();
 
   return (
     <PageContainer className="home-page">
       <section className="home-hero card">
-        <StatusBadge tone="neutral">Live Video Auctions</StatusBadge>
-
         <h1 className="home-title">
           Bid <span>live.</span>
           <br />
@@ -85,28 +130,11 @@ export default function HomeComp() {
         {!isLoadingTrending && !errorMessage && trending.length > 0 && (
           <div className="home-auction-grid">
             {trending.map((auction, index) => (
-              <article className="home-auction-card" key={auction.id}>
-                <div className={`home-auction-image home-auction-image--${index + 1}`} />
-
-                <div className="home-auction-body">
-                  <p className="home-auction-category">{auction.category}</p>
-
-                  <h3>{auction.title}</h3>
-
-                  <p className="home-auction-meta">Hosted by {auction.seller}</p>
-
-                  <div className="home-auction-bid">
-                    <div>
-                      <span>Current bid</span>
-                      <strong>${auction.currentBid}</strong>
-                    </div>
-
-                    <Link to={`/auction/${auction.id}`}>
-                      <Button>Join Live Auction</Button>
-                    </Link>
-                  </div>
-                </div>
-              </article>
+              <HomeAuctionCard
+                key={auction.auctionId || auction.id}
+                auction={auction}
+                index={index}
+              />
             ))}
           </div>
         )}

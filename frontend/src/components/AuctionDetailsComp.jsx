@@ -7,6 +7,8 @@ import LiveChat from './LiveChat';
 import ProductDescription from './ProductDescription';
 import { useAuctionDetails } from '../hooks/useAuctionDetails';
 import './AuctionDetailsComp.css';
+import FavoriteButton from './FavoriteButton';
+import { useFavorites } from '../hooks/useFavorites';
 
 export default function AuctionDetailsComp() {
   const navigate = useNavigate();
@@ -18,7 +20,10 @@ export default function AuctionDetailsComp() {
     isLoading,
     errorMessage,
     handlePlaceBid,
+    liveViewers,
   } = useAuctionDetails();
+
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   if (isLoading) {
     return (
@@ -43,6 +48,23 @@ export default function AuctionDetailsComp() {
       </PageContainer>
     );
   }
+
+  const auctionId = auction.id || auction.auctionId;
+
+  const isEnded =
+    auction.status === 'ENDED' ||
+    auction.status === 'Ended' ||
+    (auction.endsAt && new Date(auction.endsAt) <= new Date());
+
+  const isAuctionFavorite = isFavorite(auctionId);
+
+  const favoriteButton = (
+    <FavoriteButton
+      active={isAuctionFavorite}
+      disabled={isEnded && !isAuctionFavorite}
+      onClick={() => toggleFavorite(auction)}
+    />
+  );
 
   const startTimestamp = auction.startsAt || auction.startTime;
   const isUpcoming = startTimestamp && new Date(startTimestamp) > new Date();
@@ -70,7 +92,7 @@ export default function AuctionDetailsComp() {
     <PageContainer className="auction-details-page">
       <div className="ad-grid">
         <div className="ad-left">
-          <AuctionVideoPanel auction={auction} currentUserId={currentUserId}/>
+          <AuctionVideoPanel auction={auction} currentUserId={currentUserId} liveViewers={liveViewers}/>
           <LiveChat auctionId={auction.auctionId} />
           <ProductDescription auction={auction} />
         </div>
@@ -78,9 +100,10 @@ export default function AuctionDetailsComp() {
         <div className="ad-right">
           <BidPanel
             currentBid={auction.currentBid}
-            watchers={auction.watchers}
+            liveViewers={liveViewers}
             auction={auction}
             onPlaceBid={handlePlaceBid}
+            favoriteButton={favoriteButton}
           />
           <RecentBids bids={bids} />
         </div>

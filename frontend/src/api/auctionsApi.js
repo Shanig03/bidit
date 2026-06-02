@@ -11,7 +11,7 @@ export async function getAuctions() {
   return data.auctions;
 }
 
-export async function createAuction(auctionData) {
+export async function createAuction(auctionData) {  
   const response = await fetch(`${API_BASE_URL}/auctions`, {
     method: "POST",
     headers: {
@@ -67,4 +67,22 @@ export async function getBidsByAuctionId(auctionId) {
   }
 
   return data.bids || [];
+}
+
+export async function updateAuctionImage(auctionId, imageKey) {
+  const response = await fetch(`${API_BASE_URL}/auctions/${auctionId}/image`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ imageKey }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || data.message || 'Failed to update auction image');
+  }
+
+  return data.auction;
 }

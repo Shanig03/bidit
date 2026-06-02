@@ -11,7 +11,7 @@
 }
 
 .login-brand {
-    font-size: 2.8rem;
+    font-size: 3rem;
     margin: 0 0 0.75rem;
     font-weight: 800;
     color: #5948ff;
@@ -93,7 +93,7 @@
 
 .login-submit {
     width: 100%;
-    font-size: 1.8rem;
+    font-size: 1.3rem;
     padding: 0.7rem 1rem;
     border-radius: 18px;
 }

@@ -39,8 +39,6 @@ export default function ProfileComp() {
   if (isEditing) {
     return (
       <PageContainer className="profile-page">
-        <div className="profile-heading-badge">Account Center</div>
-
         <h1 className="profile-heading-title">Edit Profile</h1>
 
         <p className="profile-heading-subtitle">
@@ -145,8 +143,6 @@ export default function ProfileComp() {
 
   return (
     <PageContainer className="profile-page">
-      <div className="profile-heading-badge">Account Center</div>
-
       <h1 className="profile-heading-title">My Profile</h1>
 
       <p className="profile-heading-subtitle">

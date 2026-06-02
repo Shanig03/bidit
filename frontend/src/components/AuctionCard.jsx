@@ -1,67 +1,122 @@
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import Button from './Button';
 import { useCountdown } from '../hooks/useCountdown';
+// Import the shared custom hook to link the card logic cleanly
+import { useLiveViewerCount } from '../hooks/useLiveViewerCount';
+import { useImageViewUrl } from '../hooks/useImageViewUrl';
 import './AuctionCard.css';
+import FavoriteButton from './FavoriteButton';
+import { useFavorites } from '../hooks/useFavorites';
 
 // 1. Updated display logic within the component
 function AuctionCard({ auction }) {
-  const startTimestamp = auction.startsAt || auction.startTime;
+  const startTimestamp = auction?.startsAt || auction?.startTime;
   const isUpcoming = startTimestamp && new Date(startTimestamp) > new Date();
-  const timeLeft = useCountdown(auction.endsAt, isUpcoming);
+  // Consume the custom hook layer to retrieve dynamic real-time metrics
+  const targetId = auction.id || auction.auctionId;
+  const baselineCount = auction.viewers || auction.watchers || 0;
+  const liveViewerCount = useLiveViewerCount(targetId, baselineCount);
+  const timeLeft = useCountdown(auction?.endsAt, isUpcoming);
+
+  const { imageUrl: presignedImageUrl, isLoadingImage } = useImageViewUrl(auction?.imageKey);
+
+  const imageSrc = (presignedImageUrl || auction?.imageUrl || '').trim();
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [imageSrc]);
+  
+  const auctionId = auction.auctionId || auction.id;
+  const displayPrice = auction?.currentPrice ?? auction?.currentBid ?? auction?.startingPrice ?? 0;
+
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const isEnded = timeLeft === 'Ended' || auction.status === 'ENDED';
+  const isAuctionFavorite = isFavorite(auctionId);
 
   // Helper for better date/time display
   const formatDateTime = (isoString) => {
-    return new Date(isoString).toLocaleString([], {
-      month: 'short', 
-      day: 'numeric', 
-      hour: '2-digit', 
-      minute: '2-digit'
+    return new Date(isoString).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
     });
   };
+
 
   return (
     <article className="auction-card">
       <div className="auction-card__image">
+        {isLoadingImage ? (
+            <div className="auction-card__image-placeholder" />
+          ) : imageSrc && !imageFailed ? (
+            <img
+              src={imageSrc}
+              alt={auction.title || 'Auction item'}
+              className="auction-card__image-el"
+              onError={() => setImageFailed(true)}
+            />
+          ) : (
+            <div className="auction-card__image-placeholder" />
+          )}
+
         <div className="auction-card__top">
-          {/* Badge Label: Updated to "Upcoming" */}
           <span className={`auction-card__badge ${isUpcoming ? 'auction-card__badge--upcoming' : ''}`}>
-            {isUpcoming ? 'Upcoming' : (timeLeft === 'Ended' ? 'Ended' : 'LIVE')}
+            {isUpcoming ? 'Upcoming' : isEnded ? 'Ended' : 'LIVE'}
           </span>
-          <span className="auction-card__viewers">👁 {auction.watchers || 0}</span>
+          {/* Render the lightweight dynamic state count */}
+          <span className="auction-card__viewers">👁 {liveViewerCount}</span>
         </div>
       </div>
-      <div className="auction-card__body">
-        <p className="auction-card__host">Hosted by {auction.seller || 'Unknown'}</p>
-        <p className="auction-card__category">{auction.category}</p>
-        <h3>{auction.title}</h3>
-        <p className="auction-card__desc">{auction.category} collector item</p>
 
+      <div className="auction-card__body">
+        <p className="auction-card__host">
+          Hosted by {auction.sellerName || auction.seller || auction.sellerEmail || 'Unknown Seller'}
+        </p>
+        <p className="auction-card__category">{auction.category}</p>
+
+        <h3>{auction.title}</h3>
+        <p className="auction-card__desc">
+          {auction.description?.trim() || ''}
+        </p>
         <div className="auction-card__meta">
           <div>
-            {/* Dynamic Price Label: Starting Price vs Current Bid */}
             <span>{isUpcoming ? 'Starting Price' : 'Current Bid'}</span>
-            <strong>${auction.currentBid || auction.startingPrice}</strong>
+            <strong>${displayPrice}</strong>
           </div>
+
           <div>
             <span>{isUpcoming ? 'Starts At' : 'Time left'}</span>
             <strong>
-              {/* Full Date + Time display */}
-              {isUpcoming && startTimestamp
-                ? formatDateTime(startTimestamp) 
-                : timeLeft}
+              {isUpcoming && startTimestamp ? formatDateTime(startTimestamp) : timeLeft}
             </strong>
           </div>
         </div>
         
-        {isUpcoming || timeLeft === 'Ended' ? (
-          <Button className="auction-card__cta" disabled={true} style={{ opacity: 0.5, cursor: 'not-allowed' }}>
-            {timeLeft === 'Ended' ? 'Ended' : 'Not Started'}
-          </Button>
-        ) : (
-          <Link to={`/auction/${auction.id}`}>
-            <Button className="auction-card__cta">Join Stream</Button>
-          </Link>
-        )}
+        <div className="auction-card__actions">
+            {isUpcoming || isEnded ? (
+              <Button
+                className="auction-card__cta"
+                disabled={true}
+                style={{ opacity: 0.5, cursor: 'not-allowed' }}
+              >
+                {isEnded ? 'Ended' : 'Not Started'}
+              </Button>
+            ) : (
+              <Link to={`/auction/${auctionId}`} className="auction-card__join-link">
+                <Button className="auction-card__cta">Join Stream</Button>
+              </Link>
+            )}
+
+            <FavoriteButton
+              active={isAuctionFavorite}
+              disabled={isEnded && !isAuctionFavorite}
+              onClick={() => toggleFavorite(auction)}
+            />
+          </div>
       </div>
     </article>
   );

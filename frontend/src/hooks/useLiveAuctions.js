@@ -21,7 +21,16 @@ function mapAuctionToCardAuction(auction) {
     startsAt: auction.startsAt,
     startTime: auction.startTime,
     imageUrl: auction.imageUrl,
+    imageKey: auction.imageKey,
     sellerId: auction.sellerId,
+    sellerName: auction.sellerName,
+    seller:
+      auction.sellerName ||
+      auction.sellerDisplayName ||
+      auction.sellerUsername ||
+      auction.sellerEmail ||
+      auction.seller ||
+      'Unknown',
     viewers: auction.viewers || 0,
     watchers: auction.watchers || 0,
   };
@@ -29,7 +38,7 @@ function mapAuctionToCardAuction(auction) {
 
 export function useLiveAuctions() {
   const [auctions, setAuctions] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -39,8 +48,10 @@ export function useLiveAuctions() {
       try {
         setIsLoading(true);
         setErrorMessage('');
+
         const apiAuctions = await getAuctions();
         const mappedAuctions = apiAuctions.map(mapAuctionToCardAuction);
+
         setAuctions(mappedAuctions);
       } catch (error) {
         setErrorMessage(error.message || 'Failed to load live auctions.');
@@ -52,21 +63,44 @@ export function useLiveAuctions() {
     loadAuctions();
   }, []);
 
+  const toggleCategory = (category) => {
+    setSelectedCategories((prevCategories) => {
+      if (prevCategories.includes(category)) {
+        return prevCategories.filter((item) => item !== category);
+      }
+
+      return [...prevCategories, category];
+    });
+  };
+
+  const clearCategories = () => {
+    setSelectedCategories([]);
+  };
+
   const filteredAuctions = auctions.filter((auction) => {
-    const matchesCategory = selectedCategory === 'All' || auction.category === selectedCategory;
     const normalizedSearch = searchTerm.trim().toLowerCase();
-    
+    const auctionCategory = auction.category?.trim().toLowerCase();
+
+    const matchesCategory =
+      selectedCategories.length === 0 ||
+      selectedCategories.some(
+        (category) => category.trim().toLowerCase() === auctionCategory
+      );
+
     const matchesSearch =
       normalizedSearch === '' ||
       auction.title?.toLowerCase().includes(normalizedSearch) ||
       auction.description?.toLowerCase().includes(normalizedSearch) ||
-      auction.category?.toLowerCase().includes(normalizedSearch);
+      auction.category?.toLowerCase().includes(normalizedSearch) ||
+      auction.seller?.toLowerCase().includes(normalizedSearch) ||
+      auction.sellerId?.toLowerCase().includes(normalizedSearch);
 
     return matchesCategory && matchesSearch;
   });
 
-  // Inside useLiveAuctions.js
-  const liveAuctionsCount = auctions.filter(auction => auction.status === 'LIVE').length;
+  const liveAuctionsCount = auctions.filter(
+    (auction) => auction.status === 'LIVE'
+  ).length;
 
   return {
     filteredAuctions,
@@ -74,8 +108,9 @@ export function useLiveAuctions() {
     liveAuctionsCount,
     searchTerm,
     setSearchTerm,
-    selectedCategory,
-    setSelectedCategory,
+    selectedCategories,
+    toggleCategory,
+    clearCategories,
     isLoading,
     errorMessage
   };

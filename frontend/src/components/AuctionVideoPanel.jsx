@@ -2,7 +2,8 @@ import './AuctionVideoPanel.css';
 import { LocalUser, RemoteUser } from 'agora-rtc-react';
 import { useAuctionVideo } from '../hooks/useAuctionVideo';
 
-function AuctionVideoPanel({ auction, currentUserId }) {
+// 1. Add liveViewers to the props
+function AuctionVideoPanel({ auction, currentUserId, liveViewers }) {
   const {
     isJoined,
     setIsJoined,
@@ -53,13 +54,12 @@ function AuctionVideoPanel({ auction, currentUserId }) {
             {isJoined ? 'LIVE' : 'READY'}
           </span>
           <span className="avp-watch">
-            {/* Dynamic label showing current broadcasting status text info */}
-            {isJoined && isHost ? `⚙️ ${videoProfile === '1080p_1' ? '1080p HD' : '720p HD'}` : `👁 ${auction?.watchers ?? 0} watching`}
+            {/* 2. Display liveViewers, falling back to static watchers if necessary */}
+            {isJoined && isHost ? `⚙️ ${videoProfile === '1080p_1' ? '1080p HD' : '720p HD'}` : `👁 ${liveViewers || auction?.watchers || 0} watching`}
           </span>
         </div>
 
         <div className="avp-actions" style={{ zIndex: 12 }}>
-          {/* 3. The Resolution Picker: Only rendered if the current user is the host */}
           {isHost && (
             <select 
               className="avp-res-dropdown"

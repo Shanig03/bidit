@@ -31,6 +31,7 @@ export async function getAuctions() {
 }
 
 export async function createAuction(auctionData) {
+  console.log('Creating auction with data:', auctionData);
   const response = await fetch(`${API_BASE_URL}/auctions`, {
     method: "POST",
     headers: await getAuthHeaders(), 
@@ -72,6 +73,22 @@ export async function placeBid(auctionId, bidData) {
 
   if (!response.ok) {
     throw new Error(data.error || data.message || 'Failed to place bid');
+  }
+
+  return data;
+}
+
+export async function updateAuction(auctionId, updates) {
+  const response = await fetch(`${API_BASE_URL}/auctions/${auctionId}`, {
+    method: "PATCH",
+    headers: await getAuthHeaders(),
+    body: JSON.stringify(updates),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to update auction");
   }
 
   return data;
