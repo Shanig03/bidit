@@ -15,11 +15,6 @@ function ProductDescription({ auction }) {
         </p>
       )}
 
-      {auction?.endsAt && (
-        <p>
-          <strong>Ends at:</strong> {auction.endsAt}
-        </p>
-      )}
     </section>
   );
 }
