@@ -4,12 +4,19 @@ import './Navbar.css';
 import Button from './Button';
 import { useAuth } from '../context/AuthContext';
 import { useLogout } from '../hooks/useLogOut';
+import { USER_ROLES } from '../../constants/authConstants';
 
-const navItems = [
+
+const standardNavItems = [
   { label: 'Home', to: '/' },
   { label: 'Live Auctions', to: '/auctions' },
   { label: 'Go Live', to: '/go-live' },
   { label: 'Dashboard', to: '/dashboard' },
+];
+
+const adminNavItems = [
+  { label: 'Manage Auctions', to: '/admin/auctions' },
+  { label: 'Manage Users', to: '/admin/users' },
 ];
 
 function Navbar() {
@@ -17,7 +24,9 @@ function Navbar() {
   const { user } = useAuth();
   const { executeLogout, loading: isLoggingOut } = useLogout();
   const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
+  const isAdmin = user?.role === USER_ROLES.ADMIN;
 
+  const currentNavItems = isAdmin ? adminNavItems : standardNavItems
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   return (
@@ -29,7 +38,7 @@ function Navbar() {
         </Link>
 
         <div className="navbar__links">
-          {navItems.map((item) => (
+          {currentNavItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -60,9 +69,8 @@ function Navbar() {
                 >
                   <span>Hello, {displayName}</span>
                   <span
-                    className={`navbar__user-arrow ${
-                      isUserMenuOpen ? 'navbar__user-arrow--open' : ''
-                    }`}
+                    className={`navbar__user-arrow ${isUserMenuOpen ? 'navbar__user-arrow--open' : ''
+                      }`}
                     aria-hidden="true"
                   >
                     ▾
@@ -100,7 +108,7 @@ function Navbar() {
                 )}
               </div>
             </div>
-            
+
           )}
         </div>
       </nav>
