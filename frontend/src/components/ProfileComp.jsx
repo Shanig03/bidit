@@ -1,5 +1,6 @@
 import PageContainer from './PageContainer';
 import { useProfile } from '../hooks/useProfile';
+import { formatNumberWithCommas } from '../utils/numberFormat';
 import './ProfileComp.css';
 
 function getInitials(name = '') {
@@ -218,7 +219,7 @@ export default function ProfileComp() {
                       </div>
 
                       <strong>
-                        ${auction.winningBid ?? auction.currentPrice ?? auction.price ?? 0}
+                        ${formatNumberWithCommas(auction.winningBid ?? auction.currentPrice ?? auction.price ?? 0)}
                       </strong>
                     </div>
                   ))}

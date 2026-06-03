@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import Button from './Button';
+import { formatNumberWithCommas } from '../utils/numberFormat';
 import './DashboardBidItem.css';
 
 function DashboardBidItem({ item, imageVariant = 1 }) {
@@ -17,11 +18,11 @@ function DashboardBidItem({ item, imageVariant = 1 }) {
 
         <div className="dash-bid-meta">
           <p>
-            Your Bid: <strong>${item.myBid}</strong>
+            Your Bid: <strong>${formatNumberWithCommas(item.myBid)}</strong>
           </p>
 
           <p>
-            Current Bid: <strong>${item.currentBid}</strong>
+            Current Bid: <strong>${formatNumberWithCommas(item.currentBid)}</strong>
           </p>
 
           <p>{item.timeLeft || item.auctionStatus || 'Active'}</p>

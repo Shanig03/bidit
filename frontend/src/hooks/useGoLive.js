@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { createAuction, updateAuction } from '../api/auctionsService';
 import { uploadImage } from '../api/uploadService';
+import { parseFormattedNumber } from '../utils/numberFormat';
 
 export const durationOptions = [
   { label: '24 hours', hours: 24 },
@@ -59,7 +60,9 @@ export function useGoLive() {
       return setServerError('Product title is required.');
     }
 
-    if (!startingPrice || Number(startingPrice) <= 0) {
+    const numericStartingPrice = parseFormattedNumber(startingPrice);
+
+    if (!startingPrice || Number.isNaN(numericStartingPrice) || numericStartingPrice <= 0) {
       return setServerError('Starting price must be greater than 0.');
     }
 
@@ -81,7 +84,7 @@ export function useGoLive() {
         title: title.trim(),
         description: description.trim(),
         category,
-        startingPrice: Number(startingPrice),
+        startingPrice: numericStartingPrice,
         startsAt: new Date(startTime).toISOString(),
         endsAt: calculateEndsAt(startTime, duration),
         imageUrl: '',

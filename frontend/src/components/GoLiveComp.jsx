@@ -1,5 +1,6 @@
 import { durationOptions } from '../hooks/useGoLive';
 import ProductImageUploader from './ProductImageUploader';
+import { formatNumericInput } from '../utils/numberFormat';
 import './GoLiveComp.css';
 
 export default function GoLiveComp(props) {
@@ -72,9 +73,10 @@ export default function GoLiveComp(props) {
             <label className="upload-title">Starting Price ($)</label>
 
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
               value={startingPrice}
-              onChange={(event) => setStartingPrice(event.target.value)}
+              onChange={(event) => setStartingPrice(formatNumericInput(event.target.value))}
               min="1"
               required
             />

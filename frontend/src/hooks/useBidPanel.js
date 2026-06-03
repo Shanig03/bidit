@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { formatNumberWithCommas, formatNumericInput, parseFormattedNumber } from '../utils/numberFormat';
 
 export function useBidPanel(auction, currentBid, watchers, onPlaceBid) {
   const displayCurrentBid = currentBid ?? auction?.currentPrice ?? 0;
@@ -16,7 +17,7 @@ export function useBidPanel(auction, currentBid, watchers, onPlaceBid) {
     setErrorMessage('');
     setSuccessMessage('');
 
-    const numericBid = Number(bidAmount);
+    const numericBid = parseFormattedNumber(bidAmount);
 
     if (!bidAmount || Number.isNaN(numericBid)) {
       setErrorMessage('Please enter a valid bid amount.');
@@ -24,7 +25,7 @@ export function useBidPanel(auction, currentBid, watchers, onPlaceBid) {
     }
 
     if (numericBid <= Number(displayCurrentBid)) {
-      setErrorMessage(`Your bid must be higher than $${displayCurrentBid}.`);
+      setErrorMessage(`Your bid must be higher than $${formatNumberWithCommas(displayCurrentBid)}.`);
       return;
     }
 
@@ -47,7 +48,7 @@ export function useBidPanel(auction, currentBid, watchers, onPlaceBid) {
     displayBidCount,
     displayWatchers,
     bidAmount,
-    setBidAmount,
+    setBidAmount: (value) => setBidAmount(formatNumericInput(value)),
     errorMessage,
     successMessage,
     isSubmitting,

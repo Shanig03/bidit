@@ -2,14 +2,13 @@ import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Button from './Button';
 import { useCountdown } from '../hooks/useCountdown';
-// Import the shared custom hook to link the card logic cleanly
 import { useLiveViewerCount } from '../hooks/useLiveViewerCount';
 import { useImageViewUrl } from '../hooks/useImageViewUrl';
 import './AuctionCard.css';
 import FavoriteButton from './FavoriteButton';
 import { useFavorites } from '../hooks/useFavorites';
+import { formatNumberWithCommas } from '../utils/numberFormat';
 
-// 1. Updated display logic within the component
 function AuctionCard({ auction }) {
   const startTimestamp = auction?.startsAt || auction?.startTime;
   const isUpcoming = startTimestamp && new Date(startTimestamp) > new Date();
@@ -85,7 +84,7 @@ function AuctionCard({ auction }) {
         <div className="auction-card__meta">
           <div>
             <span>{isUpcoming ? 'Starting Price' : 'Current Bid'}</span>
-            <strong>${displayPrice}</strong>
+            <strong>${formatNumberWithCommas(displayPrice)}</strong>
           </div>
 
           <div>

@@ -1,4 +1,5 @@
 import Button from './Button';
+import { formatNumberWithCommas } from '../utils/numberFormat';
 import './DashboardWonItem.css';
 
 function DashboardWonItem({ item, imageVariant = 1 }) {
@@ -11,7 +12,7 @@ function DashboardWonItem({ item, imageVariant = 1 }) {
       <div className="dash-won-main">
         <h3>{item.title}</h3>
         <p>
-          Final Price: <strong>${item.finalPrice}</strong> • {item.wonAgo}
+          Final Price: <strong>${formatNumberWithCommas(item.finalPrice)}</strong> • {item.wonAgo}
         </p>
         <span className={`dash-won-status ${delivered ? 'dash-won-status--delivered' : 'dash-won-status--paid'}`}>
           {delivered ? 'Delivered' : 'Paid'}

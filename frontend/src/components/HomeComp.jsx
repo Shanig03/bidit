@@ -7,6 +7,7 @@ import './HomeComp.css';
 import { useState, useEffect } from 'react';
 import { useImageViewUrl } from '../hooks/useImageViewUrl';
 import { FaVideo, FaMoneyBillWave, FaGlobeAmericas } from 'react-icons/fa';
+import { formatNumberWithCommas } from '../utils/numberFormat';
 
 const trustItems = ['Real-time bidding', 'Secure payments', 'Trusted community'];
 
@@ -64,7 +65,7 @@ function HomeAuctionCard({ auction, index }) {
         <div className="home-auction-bid">
           <div>
             <span>Current bid</span>
-            <strong>${currentBid}</strong>
+            <strong>${formatNumberWithCommas(currentBid)}</strong>
           </div>
 
           <Link to={`/auction/${auctionId}`}>
