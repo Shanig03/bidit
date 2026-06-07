@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useLogin } from "../hooks/useLogin";
 import PageContainer from './PageContainer';
 import Button from './Button';
 import './LoginComp.css';
 
-export default function LoginComp({ onSubmit, onGoogleLogin, error, loading }) {
+export default function LoginComp() {
+  const { executeLogin, executeGoogleLogin, error, loading } = useLogin();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -12,7 +14,7 @@ export default function LoginComp({ onSubmit, onGoogleLogin, error, loading }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!email || !password) return;
-    onSubmit(email, password);
+    executeLogin(email, password);
   };
 
   return (
@@ -53,7 +55,7 @@ export default function LoginComp({ onSubmit, onGoogleLogin, error, loading }) {
               onClick={() => setShowPassword(!showPassword)}
               aria-label="Toggle password visibility"
             >
-              
+              👁️
             </button>
           </div>
 
@@ -76,7 +78,7 @@ export default function LoginComp({ onSubmit, onGoogleLogin, error, loading }) {
           <button
             className="login-google"
             type="button"
-            onClick={onGoogleLogin}
+            onClick={executeGoogleLogin}
             disabled={loading}
           >
             <span>G</span>

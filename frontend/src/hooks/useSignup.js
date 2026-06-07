@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export function useSignup() {
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   
   const [error, setError] = useState('');
@@ -13,7 +13,6 @@ export function useSignup() {
     setError('');
     setLoading(true);
     try {
-
       await register(email, password, username);
       navigate('/dashboard'); 
     } catch (err) {
@@ -23,5 +22,19 @@ export function useSignup() {
     }
   };
 
-  return { executeSignup, error, loading };
+  const executeGoogleSignup = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      await loginWithGoogle();
+      // Optional: Call your usersApi here to create the DynamoDB record for the new user
+      navigate('/dashboard');
+    } catch (err) {
+      setError('Failed to sign up with Google');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { executeSignup, executeGoogleSignup, error, loading };
 }
