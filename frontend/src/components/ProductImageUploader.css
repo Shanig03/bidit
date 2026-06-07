@@ -72,3 +72,136 @@
   margin-top: 0.5rem;
   color: #ff7e91;
 }
+
+.product-image-uploader {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+}
+
+.product-image-uploader__header h3 {
+  margin: 0;
+  color: #1c2348;
+}
+
+.product-image-uploader__header p {
+  margin: 0.25rem 0 0;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.product-image-dropzone {
+  min-height: 180px;
+  border: 2px dashed #8a6bd8;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 1.5rem;
+  cursor: pointer;
+  color: #1c2348;
+  background: #fff;
+}
+
+.product-image-dropzone.drag-active {
+  background: #f8f1ff;
+  border-color: #6b4cff;
+}
+
+.product-image-dropzone.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.product-image-title {
+  margin: 0;
+}
+
+.product-image-input {
+  display: none;
+}
+
+.product-image-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.product-image-preview-card {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #e5d8ff;
+  background: #f8f1ff;
+  aspect-ratio: 1 / 1;
+}
+
+.product-image-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-image-main-badge {
+  position: absolute;
+  top: 0.45rem;
+  left: 0.45rem;
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  background: linear-gradient(135deg, #8a2be2, #4a00e0);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.product-image-remove-btn {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  width: 1.85rem;
+  height: 1.85rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.product-image-remove-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.product-image-file-name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0.35rem 0.45rem;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.product-image-count {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.product-image-error {
+  margin: 0;
+  color: #991b1b;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .product-image-preview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

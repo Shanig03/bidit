@@ -68,6 +68,7 @@ export function useProfile() {
           bio: dbUser.bio || 'No bio added yet.',
           photoURL,
           profileImageKey,
+          wonAuctions: Array.isArray(dbUser.wonAuctions) ? dbUser.wonAuctions : [],
           imageFile: null,
         };
 

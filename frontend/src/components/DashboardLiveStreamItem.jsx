@@ -1,4 +1,5 @@
 import Button from './Button';
+import { formatNumberWithCommas } from '../utils/numberFormat';
 import './DashboardLiveStreamItem.css';
 
 function DashboardLiveStreamItem({ item, imageVariant = 1, onViewStream, onManage }) {
@@ -15,7 +16,7 @@ function DashboardLiveStreamItem({ item, imageVariant = 1, onViewStream, onManag
 
         <div className="dash-live-meta">
           <p>
-            Current Bid: <strong>${item.currentBid ?? item.currentPrice ?? 0}</strong>
+            Current Bid: <strong>${formatNumberWithCommas(item.currentBid ?? item.currentPrice ?? 0)}</strong>
           </p>
 
           <p>⏱ Ends at: {item.endsAt || 'Not set'}</p>

@@ -6,13 +6,30 @@ import { useTrendingAuctions } from '../hooks/useTrendingAuctions';
 import './HomeComp.css';
 import { useState, useEffect } from 'react';
 import { useImageViewUrl } from '../hooks/useImageViewUrl';
+import { FaVideo, FaMoneyBillWave, FaGlobeAmericas } from 'react-icons/fa';
+import { formatNumberWithCommas } from '../utils/numberFormat';
 
 const trustItems = ['Real-time bidding', 'Secure payments', 'Trusted community'];
 
 const featureCards = [
-  { title: 'Live Streaming', description: 'Watch sellers showcase products in real time.' },
-  { title: 'Instant Bidding', description: 'Place bids and see results immediately.' },
-  { title: 'Global Community', description: 'Connect with buyers and sellers worldwide.' },
+  {
+    title: 'Live Streaming',
+    description: 'Watch sellers showcase products in real time.',
+    icon: FaVideo,
+    iconClassName: 'home-feature-icon--1',
+  },
+  {
+    title: 'Instant Bidding',
+    description: 'Place bids and see results immediately.',
+    icon: FaMoneyBillWave,
+    iconClassName: 'home-feature-icon--2',
+  },
+  {
+    title: 'Global Community',
+    description: 'Connect with buyers and sellers worldwide.',
+    icon: FaGlobeAmericas,
+    iconClassName: 'home-feature-icon--3',
+  },
 ];
 
 function HomeAuctionCard({ auction, index }) {
@@ -48,7 +65,7 @@ function HomeAuctionCard({ auction, index }) {
         <div className="home-auction-bid">
           <div>
             <span>Current bid</span>
-            <strong>${currentBid}</strong>
+            <strong>${formatNumberWithCommas(currentBid)}</strong>
           </div>
 
           <Link to={`/auction/${auctionId}`}>
@@ -89,15 +106,22 @@ export default function HomeComp() {
         </div>
 
         <div className="home-feature-grid">
-          {featureCards.map((feature, index) => (
-            <article key={feature.title} className="home-feature-card">
-              <div className={`home-feature-icon home-feature-icon--${index + 1}`} />
-              <div>
-                <h3>{feature.title}</h3>
-                <p>{feature.description}</p>
-              </div>
-            </article>
-          ))}
+          {featureCards.map((feature) => {
+            const Icon = feature.icon;
+
+            return (
+              <article key={feature.title} className="home-feature-card">
+                <div className={`home-feature-icon ${feature.iconClassName}`}>
+                  <Icon />
+                </div>
+
+                <div>
+                  <h3>{feature.title}</h3>
+                  <p>{feature.description}</p>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
 

@@ -68,21 +68,33 @@
 }
 
 .home-feature-icon {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 3rem;
+    height: 3rem;
     border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.home-feature-icon svg {
+    width: 1.35rem;
+    height: 1.35rem;
 }
 
 .home-feature-icon--1 {
     background: #e7e1ff;
+    color: #7a5cff;
 }
 
 .home-feature-icon--2 {
     background: #ffe2ee;
+    color: #ff5e96;
 }
 
 .home-feature-icon--3 {
     background: #ffeacc;
+    color: #d98a2b;
 }
 
 .home-feature-card h3 {

@@ -1,4 +1,5 @@
 import './RecentBids.css';
+import { formatNumberWithCommas } from '../utils/numberFormat';
 
 function RecentBids({ bids = [] }) {
   const uniqueBids = Array.from(
@@ -46,7 +47,7 @@ function RecentBids({ bids = [] }) {
                     ) : null}
                   </div>
 
-                  <strong>${bid.amount}</strong>
+                  <strong>${formatNumberWithCommas(bid.amount)}</strong>
                 </li>
               );
             })}

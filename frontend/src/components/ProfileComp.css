@@ -27,8 +27,8 @@
 
 .profile-layout {
   display: grid;
-  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
-  gap: 1.5rem;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 1.75rem;
   align-items: stretch;
   margin-top: 1.5rem;
 }
@@ -103,11 +103,7 @@
 }
 
 .profile-panel {
-  padding: 1.1rem;
-}
-
-.profile-personal-info {
-  width: 100%;
+  padding: 1.35rem 1.45rem;
 }
 
 .profile-panel__header {
@@ -150,15 +146,36 @@
   border-top: 0;
 }
 
-.profile-bottom-grid {
+.profile-activity-stack {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 1.25rem;
-  align-items: stretch;
+  height: 100%;
 }
 
-.profile-bottom-grid .profile-panel {
-  min-height: 180px;
+.profile-auctions-won-panel,
+.profile-notifications-panel {
+  width: 100%;
+}
+
+.profile-auctions-won-panel {
+  min-height: 215px;
+}
+
+.profile-notifications-panel {
+  min-height: 230px;
+}
+
+.profile-empty-state {
+  display: flex;
+  align-items: center;
+  min-height: 120px;
+}
+
+.profile-empty-state p {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.45;
 }
 
 .profile-metric {
@@ -373,8 +390,8 @@
     min-height: auto;
   }
 
-  .profile-bottom-grid {
-    grid-template-columns: 1fr;
+  .profile-activity-stack {
+    height: auto;
   }
 }
 
@@ -403,4 +420,41 @@
     flex-direction: column;
     gap: 0.25rem;
   }
+}
+
+.profile-won-list {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.profile-won-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid #ece8f7;
+  background: #faf9ff;
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+}
+
+.profile-won-item span {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.profile-won-item strong {
+  color: #218a53;
+  font-size: 1.05rem;
+}
+
+.profile-won-item__details {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.profile-won-item__details small {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
 }
