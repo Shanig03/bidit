@@ -66,6 +66,8 @@ function mapApiAuctionToPageAuction(apiAuction) {
     createdAt: apiAuction.createdAt,
     bidCount: apiAuction.bidCount || 0,
     watchers: apiAuction.watchers || 0,
+    sellerName: apiAuction.sellerName,
+    sellerEmail: apiAuction.sellerEmail,
     sellerId: apiAuction.sellerId,
     sellerName: apiAuction.sellerName,
     sellerEmail: apiAuction.sellerEmail,
@@ -147,7 +149,7 @@ export function useAuctionDetails() {
     await placeBid(selectedAuctionId, {
       bidderId: user.uid,
       bidderEmail: user.email,
-      bidderName: user.displayName || user.email || 'Unknown bidder',
+      bidderName: user.displayName || user.username || user.name || user.firstName || user.email || 'Unknown bidder',
       amount,
     });
 

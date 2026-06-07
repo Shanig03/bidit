@@ -15,6 +15,8 @@ function AuctionVideoPanel({ auction, currentUserId, liveViewers }) {
     hostUser
   } = useAuctionVideo(auction, currentUserId);
 
+  const displaySellerName = auction?.sellerName || auction?.sellerEmail || auction?.sellerId || 'Unknown seller';
+
   return (
     <section className="avp card">
       <div className="avp-media" style={{ background: isJoined ? '#000' : undefined }}>
@@ -81,7 +83,7 @@ function AuctionVideoPanel({ auction, currentUserId, liveViewers }) {
             <p>
               Seller <span>{isHost ? 'You' : 'Host'}</span>
             </p>
-            <small>{auction?.sellerId || 'Unknown seller'}</small>
+            <small>{displaySellerName}</small>
           </div>
         </div>
       </div>
