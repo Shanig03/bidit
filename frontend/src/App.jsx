@@ -1,7 +1,7 @@
-import { BrowserRouter, Route, Routes, Outlet } from 'react-router-dom';
-// ❌ REMOVE THIS LINE: import AgoraRTC, { AgoraRTCProvider } from "agora-rtc-react";
+import { BrowserRouter, Route, Routes, Outlet, Navigate } from 'react-router-dom';
 
-//  REPLACE WITH THESE TWO SEPARATE IMPORTS:
+
+
 import AgoraRTC from "agora-rtc-sdk-ng"; 
 import { AgoraRTCProvider } from "agora-rtc-react";
 import Navbar from './components/Navbar';
@@ -15,9 +15,24 @@ import GoLivePage from './pages/GoLivePage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 import { AuthProvider } from './context/AuthContext';
+import { useAuth } from './context/AuthContext';
+import { USER_ROLES } from '../constants/authConstants';
+import AdminUsersPage from './pages/AdminUsersPage';
+import AdminAuctionsPage from './pages/AdminAuctionsPage';
 
 // This will now execute perfectly without throwing an undefined error!
 const agoraEngineClient = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
+
+function AdminRoute({ children }) {
+  const { user, loading } = useAuth();
+  
+  if (loading) return <div>Loading...</div>;
+  if (!user || user.role !== USER_ROLES.ADMIN) {
+    return <Navigate to="/" replace />; // Kick non-admins back to the home page
+  }
+  
+  return children;
+}
 
 const AgoraLayout = () => (
   <AgoraRTCProvider client={agoraEngineClient}>
@@ -42,6 +57,24 @@ function App() {
           <Route path="/auction/:id" element={<AuctionDetailsPage />} />
           <Route path="/go-live" element={<GoLivePage />} />
         </Route>
+
+        <Route 
+        path="/admin/users" 
+        element={
+          <AdminRoute>
+            <AdminUsersPage />
+          </AdminRoute>
+        } 
+      />
+      
+      <Route 
+        path="/admin/auctions" 
+        element={
+          <AdminRoute>
+            <AdminAuctionsPage />
+          </AdminRoute>
+        } 
+      />
       </Routes>
     </BrowserRouter>
     </AuthProvider>

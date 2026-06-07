@@ -25,7 +25,7 @@ function getInitialProfile(user) {
 }
 
 export function useProfile() {
-  const { user } = useAuth();
+  const { user, updateLocalUser } = useAuth();
 
   const [isEditing, setIsEditing] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
@@ -176,8 +176,16 @@ export function useProfile() {
         email: profile.email,
         bio: cleanBio,
         profileImageKey: profileImageKeyToSave,
-        photoURL: '',
+        photoURL: '', 
       });
+      
+
+      if (updateLocalUser) {
+        updateLocalUser({ 
+          displayName: cleanName, 
+          photoURL: photoURLToShow 
+        });
+      }
 
       const nextProfile = {
         displayName: updatedProfile.displayName || cleanName,
