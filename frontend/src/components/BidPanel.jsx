@@ -1,11 +1,24 @@
 import Button from './Button';
 import { useBidPanel } from '../hooks/useBidPanel';
+import { formatNumberWithCommas } from '../utils/numberFormat';
 import './BidPanel.css';
 
-// 1. Rename 'watchers' to 'liveViewers' for clarity
 function normalizeStatus(status) {
   return String(status || '').trim().toUpperCase();
 }
+
+// 1. Helper function to format the ISO date string into a readable format
+const formatDateTime = (isoString) => {
+  if (!isoString || isoString === 'Not set') return 'Not set';
+  return new Date(isoString).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+};
 
 function BidPanel({ auction, currentBid, liveViewers = 0, onPlaceBid, favoriteButton }) {
   const {
@@ -46,16 +59,29 @@ function BidPanel({ auction, currentBid, liveViewers = 0, onPlaceBid, favoriteBu
     <section className="bid-panel card">
       <p className="bid-panel__label">Current Highest Bid</p>
 
-      <h3 className="bid-panel__amount">${displayCurrentBid}</h3>
+      <h3 className="bid-panel__amount">${formatNumberWithCommas(displayCurrentBid)}</h3>
 
-      <div className="bid-timer">
-        ⏱ Ends at: {auction?.endsAt || 'Not set'}
+      {/* 2. Replaced the CSS class with neutral inline styling and applied the date formatter */}
+      <div style={{ 
+        color: '#333', 
+        backgroundColor: '#f5f5f5', 
+        padding: '10px 15px', 
+        borderRadius: '8px', 
+        marginBottom: '15px',
+        fontWeight: '500',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px'
+      }}>
+        <span>⏱</span>
+        Ends at: {formatDateTime(auction?.endsAt)}
       </div>
 
       <input
         className="bid-panel__input"
         placeholder="Enter your bid"
-        type="number"
+        type="text"
+        inputMode="numeric"
         min={Number(displayCurrentBid) + 1}
         value={bidAmount}
         onChange={(event) => setBidAmount(event.target.value)}
@@ -100,7 +126,7 @@ function BidPanel({ auction, currentBid, liveViewers = 0, onPlaceBid, favoriteBu
         </div>
 
         <div>
-          <strong>${displayStartingPrice}</strong>
+          <strong>${formatNumberWithCommas(displayStartingPrice)}</strong>
           <span>Starting</span>
         </div>
 

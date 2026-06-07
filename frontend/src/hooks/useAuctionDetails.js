@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { getAuctionById, placeBid, getBidsByAuctionId } from '../api/auctionsApi';
 import { getChatMessagesForAuction } from '../data/mockChatMessages';
 import { useAuth } from '../context/AuthContext';
@@ -7,7 +7,49 @@ import { ref, set, onDisconnect, remove } from 'firebase/database';
 import { realtimeDb } from '../firebase/firebaseConfig';
 import { useLiveViewerCount } from './useLiveViewerCount';
 
+function normalizeImageKeys(apiAuction) {
+  const rawImageKeys = apiAuction?.imageKeys;
+
+  if (Array.isArray(rawImageKeys)) {
+    const cleanedKeys = rawImageKeys
+      .map((item) => {
+        if (typeof item === 'string') {
+          return item;
+        }
+
+        if (item?.S) {
+          return item.S;
+        }
+
+        return '';
+      })
+      .filter(Boolean);
+
+    if (cleanedKeys.length > 0) {
+      return cleanedKeys;
+    }
+  }
+
+  if (rawImageKeys?.L && Array.isArray(rawImageKeys.L)) {
+    const cleanedKeys = rawImageKeys.L
+      .map((item) => item?.S || '')
+      .filter(Boolean);
+
+    if (cleanedKeys.length > 0) {
+      return cleanedKeys;
+    }
+  }
+
+  if (apiAuction?.imageKey) {
+    return [apiAuction.imageKey];
+  }
+
+  return [];
+}
+
 function mapApiAuctionToPageAuction(apiAuction) {
+  const imageKeys = normalizeImageKeys(apiAuction);
+
   return {
     id: apiAuction.auctionId,
     auctionId: apiAuction.auctionId,
@@ -24,18 +66,22 @@ function mapApiAuctionToPageAuction(apiAuction) {
     createdAt: apiAuction.createdAt,
     bidCount: apiAuction.bidCount || 0,
     watchers: apiAuction.watchers || 0,
+    sellerName: apiAuction.sellerName,
+    sellerEmail: apiAuction.sellerEmail,
     sellerId: apiAuction.sellerId,
+    sellerName: apiAuction.sellerName,
+    sellerEmail: apiAuction.sellerEmail,
     highestBidderId: apiAuction.highestBidderId,
     highestBidderEmail: apiAuction.highestBidderEmail,
     imageUrl: apiAuction.imageUrl,
-    imageKey: apiAuction.imageKey,
+    imageKey: apiAuction.imageKey || imageKeys[0] || '',
+    imageKeys,
     agoraChannelName: apiAuction.agoraChannelName,
   };
 }
 
 export function useAuctionDetails() {
   const { id, auctionId } = useParams();
-  const navigate = useNavigate();
   const selectedAuctionId = auctionId || id;
 
   const { user } = useAuth();
@@ -57,6 +103,9 @@ export function useAuctionDetails() {
 
         const apiAuction = await getAuctionById(selectedAuctionId);
         const pageAuction = mapApiAuctionToPageAuction(apiAuction);
+
+        console.log('API AUCTION:', apiAuction);
+        console.log('PAGE AUCTION IMAGE KEYS:', pageAuction.imageKeys);
 
         setAuction(pageAuction);
         setBids(await getBidsByAuctionId(selectedAuctionId));
@@ -100,7 +149,7 @@ export function useAuctionDetails() {
     await placeBid(selectedAuctionId, {
       bidderId: user.uid,
       bidderEmail: user.email,
-      bidderName: user.displayName || user.email || 'Unknown bidder',
+      bidderName: user.displayName || user.username || user.name || user.firstName || user.email || 'Unknown bidder',
       amount,
     });
 

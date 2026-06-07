@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { authService } from '../firebase/firebaseConfig';
+import { getUserProfile } from '../api/usersApi';
 
 const AuthContext = createContext({ 
   user: null, 
@@ -7,7 +8,8 @@ const AuthContext = createContext({
   login: async () => {},
   register: async () => {},
   loginWithGoogle: async () => {},
-  logout: async () => {}
+  logout: async () => {},
+  updateLocalUser: () => {}
 });
 
 export function AuthProvider({ children }) {
@@ -15,14 +17,33 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Listen for Firebase auth state changes
-    const unsubscribe = authService.subscribeToAuthChanges((currentUser) => {
-      setUser(currentUser);
+    const unsubscribe = authService.subscribeToAuthChanges(async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const dbProfile = await getUserProfile(firebaseUser.uid);
+          
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            ...dbProfile 
+          });
+        } catch (error) {
+          console.error("Failed to fetch user profile from DynamoDB:", error);
+          setUser(firebaseUser); 
+        }
+      } else {
+        // User logged out
+        setUser(null);
+      }
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
+
+  const updateLocalUser = (updatedFields) => {
+    setUser((prevUser) => ({ ...prevUser, ...updatedFields }));
+  };
 
   const value = {
     user,
@@ -30,7 +51,8 @@ export function AuthProvider({ children }) {
     login: authService.login,
     register: authService.register,
     loginWithGoogle: authService.loginWithGoogle,
-    logout: authService.logout
+    logout: authService.logout,
+    updateLocalUser
   };
 
   return (

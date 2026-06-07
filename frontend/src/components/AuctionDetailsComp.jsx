@@ -9,6 +9,7 @@ import { useAuctionDetails } from '../hooks/useAuctionDetails';
 import './AuctionDetailsComp.css';
 import FavoriteButton from './FavoriteButton';
 import { useFavorites } from '../hooks/useFavorites';
+import ProductImageGallery from './ProductImageGallery';
 
 export default function AuctionDetailsComp() {
   const navigate = useNavigate();
@@ -92,8 +93,16 @@ export default function AuctionDetailsComp() {
     <PageContainer className="auction-details-page">
       <div className="ad-grid">
         <div className="ad-left">
-          <AuctionVideoPanel auction={auction} currentUserId={currentUserId} liveViewers={liveViewers}/>
+          <AuctionVideoPanel
+            auction={auction}
+            currentUserId={currentUserId}
+            liveViewers={liveViewers}
+          />
+
           <LiveChat auctionId={auction.auctionId} />
+
+          <ProductImageGallery auction={auction} />
+
           <ProductDescription auction={auction} />
         </div>
 

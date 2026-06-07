@@ -201,3 +201,13 @@
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+.navbar__admin-badge {
+  background-color: #e13d5c;
+  color: white;
+  font-size: 0.65rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}

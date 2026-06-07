@@ -107,9 +107,9 @@ export default function LiveAuctionsComp() {
       {/* 2. Map over your new displayAuctions array */}
       {!isLoading && !errorMessage && displayAuctions.length > 0 && (
         <section className="live-grid">
-          {filteredAuctions.map((auction) => (
+          {displayAuctions.map((auction) => (
             <AuctionCard
-              key={auction.id}
+              key={auction.auctionId || auction.id}
               auction={auction}
             />
           ))}
