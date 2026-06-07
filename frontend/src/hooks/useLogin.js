@@ -1,11 +1,16 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export function useLogin() {
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
-  
+  const location = useLocation();
+  const fromLocation = location.state?.from;
+  const redirectPath = fromLocation
+    ? `${fromLocation.pathname}${fromLocation.search || ''}${fromLocation.hash || ''}`
+    : '/dashboard';
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -14,7 +19,7 @@ export function useLogin() {
     setLoading(true);
     try {
       await login(email, password);
-      navigate('/dashboard'); 
+      navigate(redirectPath, { replace: true });
     } catch (err) {
       setError(err.message || 'Failed to log in');
     } finally {
@@ -27,8 +32,8 @@ export function useLogin() {
     setLoading(true);
     try {
       await loginWithGoogle();
-      navigate('/dashboard');
-    } catch (err) {
+      navigate(redirectPath, { replace: true });
+    } catch {
       setError('Failed to log in with Google');
     } finally {
       setLoading(false);
