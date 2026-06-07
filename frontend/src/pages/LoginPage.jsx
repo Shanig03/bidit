@@ -1,15 +1,7 @@
-import { useLogin } from '../hooks/useLogin';
+// LoginPage.jsx
 import LoginComp from '../components/LoginComp';
 
 export default function LoginPage() {
-  const { executeLogin, executeGoogleLogin, error, loading } = useLogin();
-
-  return (
-    <LoginComp 
-      onSubmit={executeLogin} 
-      onGoogleLogin={executeGoogleLogin} 
-      error={error} 
-      loading={loading} 
-    />
-  );
+  // No hooks needed here anymore
+  return <LoginComp />;
 }

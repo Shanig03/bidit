@@ -1,14 +1,7 @@
-import { useSignup } from '../hooks/useSignup';
+// SignupPage.jsx
 import SignUpComp from '../components/SignUpComp';
 
 export default function SignupPage() {
-  const { executeSignup, error, loading } = useSignup();
-
-  return (
-    <SignUpComp 
-      onSubmit={executeSignup} 
-      error={error} 
-      loading={loading} 
-    />
-  );
+  // No hooks needed here anymore
+  return <SignUpComp />;
 }
