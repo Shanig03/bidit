@@ -15,6 +15,7 @@ import GoLivePage from './pages/GoLivePage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // This will now execute perfectly without throwing an undefined error!
 const agoraEngineClient = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
@@ -35,12 +36,17 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/auctions" element={<LiveAuctionsPage />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+        </Route>
 
         <Route element={<AgoraLayout />}>
           <Route path="/auction/:id" element={<AuctionDetailsPage />} />
-          <Route path="/go-live" element={<GoLivePage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/go-live" element={<GoLivePage />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

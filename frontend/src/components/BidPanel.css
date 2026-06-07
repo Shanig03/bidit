@@ -122,3 +122,27 @@
   font-size: 0.85rem;
   font-weight: 600;
 }
+
+.bid-panel__auth-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 0 0.75rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(225, 61, 92, 0.22);
+  border-radius: 12px;
+  background: rgba(225, 61, 92, 0.08);
+}
+
+.bid-panel__auth-notice p {
+  margin: 0;
+  color: #e13d5c;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.bid-panel__login-button {
+  flex: 0 0 auto;
+  padding: 0.5rem 0.8rem;
+}

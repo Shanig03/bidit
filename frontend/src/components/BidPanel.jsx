@@ -1,6 +1,9 @@
+import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Button from './Button';
 import { useBidPanel } from '../hooks/useBidPanel';
 import { formatNumberWithCommas } from '../utils/numberFormat';
+import { useAuth } from '../context/AuthContext';
 import './BidPanel.css';
 
 function normalizeStatus(status) {
@@ -8,6 +11,10 @@ function normalizeStatus(status) {
 }
 
 function BidPanel({ auction, currentBid, liveViewers = 0, onPlaceBid, favoriteButton }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [authMessage, setAuthMessage] = useState('');
   const {
     displayCurrentBid,
     displayStartingPrice,
@@ -42,6 +49,20 @@ function BidPanel({ auction, currentBid, liveViewers = 0, onPlaceBid, favoriteBu
 
   const disabledReason = getDisabledReason();
 
+  function goToLogin() {
+    navigate('/login', { state: { from: location } });
+  }
+
+  function handleProtectedBid() {
+    if (!user) {
+      setAuthMessage('You must be logged in to perform this action.');
+      return;
+    }
+
+    setAuthMessage('');
+    handleSubmitBid();
+  }
+
   return (
     <section className="bid-panel card">
       <p className="bid-panel__label">Current Highest Bid</p>
@@ -69,6 +90,15 @@ function BidPanel({ auction, currentBid, liveViewers = 0, onPlaceBid, favoriteBu
         </p>
       )}
 
+      {authMessage && (
+        <div className="bid-panel__auth-notice" role="alert">
+          <p>{authMessage}</p>
+          <Button variant="secondary" className="bid-panel__login-button" onClick={goToLogin}>
+            Log In
+          </Button>
+        </div>
+      )}
+
       {errorMessage && (
         <p className="bid-panel__message bid-panel__message--error">
           {errorMessage}
@@ -85,7 +115,7 @@ function BidPanel({ auction, currentBid, liveViewers = 0, onPlaceBid, favoriteBu
         <Button
           variant="urgent"
           className="bid-place"
-          onClick={handleSubmitBid}
+          onClick={handleProtectedBid}
           disabled={isBidDisabled}
         >
           {isSubmitting ? 'Placing Bid...' : 'Place Bid'}
