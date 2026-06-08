@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { createUserProfile } from '../api/usersApi';
 
 export function useSignup() {
   const { register, loginWithGoogle } = useAuth();
@@ -13,7 +14,18 @@ export function useSignup() {
     setError('');
     setLoading(true);
     try {
-      await register(email, password, username);
+      // 1. Authenticate with Firebase 
+      // (Your firebaseConfig.js already handles updateProfile internally!)
+      const userCredential = await register(email, password, username);
+      const user = userCredential.user;
+
+      // 2. Sync profile data to DynamoDB
+      await createUserProfile({
+        uid: user.uid,
+        email: user.email,
+        displayName: username // <-- CHANGED from 'username' to 'displayName'
+      });
+
       navigate('/dashboard'); 
     } catch (err) {
       setError(err.message || 'Failed to create account');
@@ -26,8 +38,16 @@ export function useSignup() {
     setError('');
     setLoading(true);
     try {
-      await loginWithGoogle();
-      // Optional: Call your usersApi here to create the DynamoDB record for the new user
+      const userCredential = await loginWithGoogle();
+      const user = userCredential.user;
+
+      await createUserProfile({
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName, // <-- CHANGED from 'username' to 'displayName'
+        profilePic: user.photoURL || ""
+      });
+
       navigate('/dashboard');
     } catch (err) {
       setError('Failed to sign up with Google');
