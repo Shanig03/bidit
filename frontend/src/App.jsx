@@ -1,7 +1,5 @@
 import { BrowserRouter, Route, Routes, Outlet, Navigate } from 'react-router-dom';
 
-
-
 import AgoraRTC from "agora-rtc-sdk-ng"; 
 import { AgoraRTCProvider } from "agora-rtc-react";
 import Navbar from './components/Navbar';
@@ -21,7 +19,6 @@ import AdminUsersPage from './pages/AdminUsersPage';
 import AdminAuctionsPage from './pages/AdminAuctionsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
-// This will now execute perfectly without throwing an undefined error!
 const agoraEngineClient = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
 
 function AdminRoute({ children }) {
