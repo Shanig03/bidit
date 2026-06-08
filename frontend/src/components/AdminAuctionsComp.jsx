@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import './AdminPanel.css';
+import { useNavigate } from 'react-router-dom';
 
 function formatPrice(value) {
   const numericValue = Number(value || 0);
@@ -38,6 +39,7 @@ function getStatusLabel(status) {
 }
 
 export default function AdminAuctionsComp({ auctions = [], onDelete }) {
+  const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -150,6 +152,15 @@ export default function AdminAuctionsComp({ auctions = [], onDelete }) {
                     </div>
                   </div>
 
+                  <div className="admin-live-card-actions">
+                  <button
+                    type="button"
+                    className="admin-live-view-btn"
+                    onClick={() => navigate(`/auction/${auction.auctionId}`)}
+                  >
+                    View Auction
+                  </button>
+
                   <button
                     type="button"
                     className="admin-live-delete-btn"
@@ -157,6 +168,7 @@ export default function AdminAuctionsComp({ auctions = [], onDelete }) {
                   >
                     Delete Auction
                   </button>
+                </div>
                 </div>
               </article>
             );
