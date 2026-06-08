@@ -2,8 +2,8 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { authService } from '../firebase/firebaseConfig';
 import { getUserProfile } from '../api/usersApi';
 
-const AuthContext = createContext({ 
-  user: null, 
+const AuthContext = createContext({
+  user: null,
   loading: true,
   login: async () => {},
   register: async () => {},
@@ -20,21 +20,34 @@ export function AuthProvider({ children }) {
     const unsubscribe = authService.subscribeToAuthChanges(async (firebaseUser) => {
       if (firebaseUser) {
         try {
+          const token = await firebaseUser.getIdToken();
           const dbProfile = await getUserProfile(firebaseUser.uid);
-          
+
           setUser({
             uid: firebaseUser.uid,
             email: firebaseUser.email,
-            ...dbProfile 
+            displayName: firebaseUser.displayName,
+            token,
+            ...dbProfile,
+            role: (dbProfile?.role || 'USER').toUpperCase(),
           });
         } catch (error) {
           console.error("Failed to fetch user profile from DynamoDB:", error);
-          setUser(firebaseUser); 
+
+          const token = await firebaseUser.getIdToken();
+
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            token,
+            role: 'USER',
+          });
         }
       } else {
-        // User logged out
         setUser(null);
       }
+
       setLoading(false);
     });
 

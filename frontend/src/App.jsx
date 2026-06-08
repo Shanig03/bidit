@@ -23,12 +23,19 @@ const agoraEngineClient = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
 
 function AdminRoute({ children }) {
   const { user, loading } = useAuth();
-  
+
   if (loading) return <div>Loading...</div>;
-  if (!user || user.role !== USER_ROLES.ADMIN) {
-    return <Navigate to="/" replace />; // Kick non-admins back to the home page
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
   }
-  
+
+  const role = user.role?.toUpperCase();
+
+  if (role !== USER_ROLES.ADMIN) {
+    return <Navigate to="/" replace />;
+  }
+
   return children;
 }
 
