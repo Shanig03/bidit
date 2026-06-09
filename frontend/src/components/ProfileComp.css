@@ -158,6 +158,27 @@
   width: 100%;
 }
 
+.profile-notifications-panel {
+  min-height: 230px;
+  max-height: 360px;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-notifications-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.profile-notifications-list::-webkit-scrollbar-thumb {
+  background: #d7cdfb;
+  border-radius: 999px;
+}
+
+.profile-notifications-list::-webkit-scrollbar-track {
+  background: #f5f2ff;
+  border-radius: 999px;
+}
+
 .profile-auctions-won-panel {
   min-height: 215px;
 }
@@ -457,4 +478,55 @@
 .profile-won-item__details small {
   color: var(--color-text-muted);
   font-size: 0.85rem;
+}
+
+.profile-notifications-list {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1rem;
+  overflow-y: auto;
+  padding-right: 0.35rem;
+  max-height: 260px;
+}
+
+.profile-notification-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid #ece8f7;
+  border-radius: 14px;
+  background: #faf9ff;
+}
+
+.profile-notification-item__content {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.profile-notification-item__content strong {
+  color: var(--color-text);
+}
+
+.profile-notification-item__content p {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.profile-notification-item__content small {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.profile-notification-badge {
+  align-self: flex-start;
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  background: #f5f2ff;
+  color: #5d3acf;
+  border: 1px solid #d7cdfb;
+  font-size: 0.78rem;
+  font-weight: 900;
+  white-space: nowrap;
 }

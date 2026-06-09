@@ -24,9 +24,22 @@ function formatWonDate(dateValue) {
   return date.toLocaleDateString('en-GB');
 }
 
+function formatNotificationDate(dateValue) {
+  if (!dateValue) return '';
+
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  return date.toLocaleDateString('en-GB');
+}
+
 export default function ProfileComp() {
   const {
     profile,
+    notifications,
     formData,
     isEditing,
     isLoadingProfile,
@@ -42,6 +55,7 @@ export default function ProfileComp() {
   } = useProfile();
 
   const wonAuctions = Array.isArray(profile?.wonAuctions) ? profile.wonAuctions : [];
+  const userNotifications = Array.isArray(notifications) ? notifications : [];
 
   if (isLoadingProfile) {
     return (
@@ -219,7 +233,9 @@ export default function ProfileComp() {
                       </div>
 
                       <strong>
-                        ${formatNumberWithCommas(auction.winningBid ?? auction.currentPrice ?? auction.price ?? 0)}
+                        ${formatNumberWithCommas(
+                          auction.winningBid ?? auction.currentPrice ?? auction.price ?? 0
+                        )}
                       </strong>
                     </div>
                   ))}
@@ -236,9 +252,34 @@ export default function ProfileComp() {
                 <h3>Notifications</h3>
               </div>
 
-              <div className="profile-empty-state">
-                <p>No notifications yet.</p>
-              </div>
+              {userNotifications.length > 0 ? (
+                <div className="profile-notifications-list">
+                  {userNotifications.map((notification) => (
+                    <div
+                      className="profile-notification-item"
+                      key={notification.notificationId}
+                    >
+                      <div className="profile-notification-item__content">
+                        <strong>{notification.title || 'Notification'}</strong>
+
+                        <p>{notification.message || 'You have a new notification.'}</p>
+
+                        {notification.createdAt && (
+                          <small>{formatNotificationDate(notification.createdAt)}</small>
+                        )}
+                      </div>
+
+                      {!notification.read && (
+                        <span className="profile-notification-badge">New</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="profile-empty-state">
+                  <p>No notifications yet.</p>
+                </div>
+              )}
             </article>
           </div>
         </section>
