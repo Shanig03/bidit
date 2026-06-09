@@ -24,17 +24,18 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const googleProvider = new GoogleAuthProvider();
 
+// Forces the Google account selection prompt
+googleProvider.setCustomParameters({ prompt: 'select_account' }); 
+
 export const auth = getAuth(app);
 export const realtimeDb = getDatabase(app);
 
 export const authService = {
   register: async (email, password, username) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    
     await updateProfile(userCredential.user, {
       displayName: username
     });
-
     return userCredential;
   },
 

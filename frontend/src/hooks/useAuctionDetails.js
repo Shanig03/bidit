@@ -149,7 +149,7 @@ export function useAuctionDetails() {
     await placeBid(selectedAuctionId, {
       bidderId: user.uid,
       bidderEmail: user.email,
-      bidderName: user.displayName || user.username || user.name || user.firstName || user.email || 'Unknown bidder',
+      displayName: user.displayName, // <-- Changed to explicitly use displayName
       amount,
     });
 

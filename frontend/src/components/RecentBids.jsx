@@ -18,16 +18,16 @@ function RecentBids({ bids = [] }) {
   const uniqueBids = Array.from(
     new Map(
       bids.map((bid) => [
-        // Updated the map key to also check for bidderName just to be safe
-        bid.bidId || bid.id || `${bid.bidderName || bid.username || bid.bidderId}-${bid.amount}-${bid.createdAt || bid.placedAt}`,
+        // Added displayName to the fallback key generator
+        bid.bidId || bid.id || `${bid.displayName || bid.username || bid.bidderId}-${bid.amount}-${bid.createdAt || bid.placedAt}`,
         bid,
       ])
     ).values()
   );
 
   const getBidderDisplayName = (bid) => {
-    // 2. Grab whatever identifier the database gave us, prioritizing bidderName
-    const rawName = bid.bidderName || bid.name || bid.username || bid.bidderEmail || bid.bidderId || 'Anonymous bidder';
+    // 2. Put bid.displayName at the absolute front of the line!
+    const rawName = bid.displayName || bid.username || bid.bidderName || bid.name || bid.bidderEmail || bid.bidderId || 'Anonymous bidder';
     
     // 3. If it is an email address, split it at the '@' and keep only the prefix
     if (typeof rawName === 'string' && rawName.includes('@')) {
