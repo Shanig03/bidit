@@ -47,10 +47,16 @@ export function useAuctionVideo(auction, currentUserId) {
     }
   }, [localCameraTrack, videoProfile]);
 
+  // useJoin({
+  //   appid: '8c90d46469d644e8bf65467f745862f7', 
+  //   channel: auction?.agoraChannelName || `auction-${auction?.id}`,
+  //   token: null, 
+  // }, isJoined);
+  
   useJoin({
     appid: '8c90d46469d644e8bf65467f745862f7', 
-    channel: auction?.agoraChannelName || `auction-${auction?.id}`,
-    token: null, 
+    channel: 'test',
+    token: '007eJxTYEiInHDSvbpXuFZ6ZX4pc7lgvJ6C44SVEs2X2IXYe8ILLikwWCRbGqSYmJmYWaaYmZikWiSlmZmamJmnmZuYWpgZpZl3PFbPaghkZOiR2sXKyACBID4LQ0lqcQkDAwAJCRs2', 
   }, isJoined);
 
   // FIXED: Filter out uninitialized tracks. 
