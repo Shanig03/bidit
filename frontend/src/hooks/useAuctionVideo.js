@@ -11,23 +11,23 @@ export function useAuctionVideo(auction, currentUserId) {
   const [isJoined, setIsJoined] = useState(false);
   const [videoProfile, setVideoProfile] = useState("720p_1");
 
+  // Force isHost to true for testing if you want both sides to be able to broadcast,
+  // or leave it as database-driven:
   const isHost = auction?.sellerId === currentUserId; 
 
   const { localCameraTrack } = useLocalCameraTrack(isHost && isJoined);
   const { localMicrophoneTrack } = useLocalMicrophoneTrack(isHost && isJoined);
 
-  // DEBUGGING EFFECT: Open your developer console (F12) to make sure you and your friend match!
+  // Debugging logs to verify state transitions in the F12 console
   useEffect(() => {
     if (isJoined) {
-      console.log("=== AGORA NETWORK DEBUGGING ===");
-      console.log("App ID Active:", "8c90d46469d644e8bf65467f745862f7");
-      console.log("Target Channel String:", auction?.agoraChannelName || `auction-${auction?.id}`);
-      console.log("Am I recognized as Host/Seller?:", isHost);
-      console.log("My User ID:", currentUserId);
-      console.log("Auction Database Seller ID:", auction?.sellerId);
-      console.log("===============================");
+      console.log("=== AGORA TESTING CONFIG ===");
+      console.log("App ID:", "8c90d46469d644e8bf65467f745862f7");
+      console.log("Channel Name:", "test");
+      console.log("Is Host/Publisher?:", isHost);
+      console.log("============================");
     }
-  }, [isJoined, auction, isHost, currentUserId]);
+  }, [isJoined, isHost]);
 
   // Video encoder configuration effect
   useEffect(() => {
@@ -47,20 +47,20 @@ export function useAuctionVideo(auction, currentUserId) {
     }
   }, [localCameraTrack, videoProfile]);
 
-  // useJoin({
+   // useJoin({
   //   appid: '8c90d46469d644e8bf65467f745862f7', 
   //   channel: auction?.agoraChannelName || `auction-${auction?.id}`,
   //   token: null, 
   // }, isJoined);
-  
+
+  // Joining the explicit test room with your verified token
   useJoin({
     appid: '8c90d46469d644e8bf65467f745862f7', 
     channel: 'test',
     token: '007eJxTYEiInHDSvbpXuFZ6ZX4pc7lgvJ6C44SVEs2X2IXYe8ILLikwWCRbGqSYmJmYWaaYmZikWiSlmZmamJmnmZuYWpgZpZl3PFbPaghkZOiR2sXKyACBID4LQ0lqcQkDAwAJCRs2', 
   }, isJoined);
 
-  // FIXED: Filter out uninitialized tracks. 
-  // Passing empty/null tracks to usePublish instantly breaks its broadcast state machine.
+  // Safely publish streams only when tracks are physically ready
   const activeTracks = [localMicrophoneTrack, localCameraTrack].filter(Boolean);
   usePublish(activeTracks, isJoined && isHost && activeTracks.length > 0);
 
