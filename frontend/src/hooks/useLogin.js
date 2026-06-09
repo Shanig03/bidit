@@ -1,55 +1,87 @@
-import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getUserProfile } from '../api/usersApi';
 import { USER_ROLES } from '../../constants/authConstants';
 
-function buildRedirectPath(fromLocation, role) {
-  if (fromLocation?.pathname) {
-    return `${fromLocation.pathname}${fromLocation.search || ''}${fromLocation.hash || ''}`;
-  }
+const BLOCKED_MESSAGE = 'Your account has been blocked by an admin.';
 
-  if (typeof fromLocation === 'string') {
-    return fromLocation;
-  }
-
-  return role === USER_ROLES.ADMIN ? '/admin/users' : '/dashboard';
+function normalizeRole(role) {
+  return String(role || USER_ROLES.USER).toUpperCase();
 }
 
-async function getRedirectRole(firebaseCredential) {
+function normalizeStatus(status) {
+  return String(status || 'ACTIVE').toUpperCase();
+}
+
+function getRedirectPathByRole(role) {
+  return role === USER_ROLES.ADMIN ? '/admin/users' : '/';
+}
+
+function getInitialBlockedMessage() {
+  return sessionStorage.getItem('authBlockedMessage') || '';
+}
+
+async function validateUserIsNotBlocked(firebaseCredential, logout) {
   const firebaseUser = firebaseCredential?.user;
 
   if (!firebaseUser?.uid) {
-    return USER_ROLES.USER;
+    throw new Error('Failed to load user data.');
   }
 
-  try {
-    const dbProfile = await getUserProfile(firebaseUser.uid);
-    return (dbProfile?.role || USER_ROLES.USER).toUpperCase();
-  } catch {
-    return USER_ROLES.USER;
+  const dbProfile = await getUserProfile(firebaseUser.uid);
+  const status = normalizeStatus(dbProfile?.status);
+
+  if (status === 'BLOCKED') {
+    sessionStorage.setItem('authBlockedMessage', BLOCKED_MESSAGE);
+    await logout();
+    throw new Error(BLOCKED_MESSAGE);
   }
+
+  return {
+    uid: firebaseUser.uid,
+    email: firebaseUser.email,
+    displayName: firebaseUser.displayName,
+    ...dbProfile,
+    role: normalizeRole(dbProfile?.role),
+    status,
+  };
 }
 
 export function useLogin() {
-  const { login, loginWithGoogle } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const fromLocation = location.state?.from;
+  const {
+    user,
+    loading: authLoading,
+    login,
+    loginWithGoogle,
+    logout,
+    updateLocalUser,
+  } = useAuth();
 
-  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  const [error, setError] = useState(getInitialBlockedMessage);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!authLoading && user && !sessionStorage.getItem('authBlockedMessage')) {
+      const role = normalizeRole(user.role);
+      navigate(getRedirectPathByRole(role), { replace: true });
+    }
+  }, [authLoading, user, navigate]);
+
   const executeLogin = async (email, password) => {
+    sessionStorage.removeItem('authBlockedMessage');
     setError('');
     setLoading(true);
 
     try {
       const credential = await login(email, password);
-      const role = await getRedirectRole(credential);
-      const redirectPath = buildRedirectPath(fromLocation, role);
+      const localUser = await validateUserIsNotBlocked(credential, logout);
 
-      navigate(redirectPath, { replace: true });
+      updateLocalUser(localUser);
+
+      navigate(getRedirectPathByRole(localUser.role), { replace: true });
     } catch (err) {
       setError(err.message || 'Failed to log in');
     } finally {
@@ -58,17 +90,19 @@ export function useLogin() {
   };
 
   const executeGoogleLogin = async () => {
+    sessionStorage.removeItem('authBlockedMessage');
     setError('');
     setLoading(true);
 
     try {
       const credential = await loginWithGoogle();
-      const role = await getRedirectRole(credential);
-      const redirectPath = buildRedirectPath(fromLocation, role);
+      const localUser = await validateUserIsNotBlocked(credential, logout);
 
-      navigate(redirectPath, { replace: true });
-    } catch {
-      setError('Failed to log in with Google');
+      updateLocalUser(localUser);
+
+      navigate(getRedirectPathByRole(localUser.role), { replace: true });
+    } catch (err) {
+      setError(err.message || 'Failed to log in with Google');
     } finally {
       setLoading(false);
     }

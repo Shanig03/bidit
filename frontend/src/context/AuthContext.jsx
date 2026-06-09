@@ -1,6 +1,9 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { authService } from '../firebase/firebaseConfig';
+import { ref, onValue } from 'firebase/database';
+import { authService, realtimeDb } from '../firebase/firebaseConfig';
 import { getUserProfile } from '../api/usersApi';
+
+const BLOCKED_MESSAGE = 'Your account has been blocked by an admin.';
 
 const AuthContext = createContext({
   user: null,
@@ -12,16 +15,39 @@ const AuthContext = createContext({
   updateLocalUser: () => {}
 });
 
+function normalizeRole(role) {
+  return String(role || 'USER').toUpperCase();
+}
+
+function normalizeStatus(status) {
+  return String(status || 'ACTIVE').toUpperCase();
+}
+
+function storeBlockedMessage() {
+  sessionStorage.setItem('authBlockedMessage', BLOCKED_MESSAGE);
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = authService.subscribeToAuthChanges(async (firebaseUser) => {
+      setLoading(true);
+
       if (firebaseUser) {
         try {
           const token = await firebaseUser.getIdToken();
           const dbProfile = await getUserProfile(firebaseUser.uid);
+
+          const status = normalizeStatus(dbProfile?.status);
+
+          if (status === 'BLOCKED') {
+            await authService.logout();
+            setUser(null);
+            storeBlockedMessage();
+            return;
+          }
 
           setUser({
             uid: firebaseUser.uid,
@@ -29,10 +55,11 @@ export function AuthProvider({ children }) {
             displayName: firebaseUser.displayName,
             token,
             ...dbProfile,
-            role: (dbProfile?.role || 'USER').toUpperCase(),
+            role: normalizeRole(dbProfile?.role),
+            status
           });
         } catch (error) {
-          console.error("Failed to fetch user profile from DynamoDB:", error);
+          console.error('Failed to fetch user profile from DynamoDB:', error);
 
           const token = await firebaseUser.getIdToken();
 
@@ -42,6 +69,7 @@ export function AuthProvider({ children }) {
             displayName: firebaseUser.displayName,
             token,
             role: 'USER',
+            status: 'ACTIVE'
           });
         }
       } else {
@@ -54,8 +82,29 @@ export function AuthProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!user?.uid) return undefined;
+
+    const userStatusRef = ref(realtimeDb, `userStatuses/${user.uid}/status`);
+
+    const unsubscribeStatus = onValue(userStatusRef, async (snapshot) => {
+      const realtimeStatus = normalizeStatus(snapshot.val());
+
+      if (realtimeStatus === 'BLOCKED') {
+        storeBlockedMessage();
+        await authService.logout();
+        setUser(null);
+      }
+    });
+
+    return () => unsubscribeStatus();
+  }, [user?.uid]);
+
   const updateLocalUser = (updatedFields) => {
-    setUser((prevUser) => ({ ...prevUser, ...updatedFields }));
+    setUser((prevUser) => ({
+      ...(prevUser || {}),
+      ...updatedFields,
+    }));
   };
 
   const value = {

@@ -6,7 +6,7 @@ function ProtectedRoute() {
   const location = useLocation();
 
   if (loading) {
-    return null;
+    return <div>Loading...</div>;
   }
 
   if (!user) {
