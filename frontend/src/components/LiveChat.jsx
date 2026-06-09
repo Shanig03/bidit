@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   limitToLast,
@@ -55,6 +55,7 @@ function LiveChat({ auctionId }) {
   const [errorMessage, setErrorMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [authMessage, setAuthMessage] = useState('');
+  const messagesListRef = useRef(null);
 
   useEffect(() => {
     if (!auctionId) {
@@ -92,6 +93,19 @@ function LiveChat({ auctionId }) {
 
     return () => unsubscribe();
   }, [auctionId]);
+
+  useEffect(() => {
+    const messagesList = messagesListRef.current;
+
+    if (!messagesList) {
+      return;
+    }
+
+    messagesList.scrollTo({
+      top: messagesList.scrollHeight,
+      behavior: 'smooth',
+    });
+  }, [messages]);
 
   function showAuthMessage() {
     setAuthMessage('You must be logged in to perform this action.');
@@ -155,7 +169,7 @@ function LiveChat({ auctionId }) {
         <span>{messages.length} messages</span>
       </div>
 
-      <ul className="live-chat__messages">
+      <ul className="live-chat__messages" ref={messagesListRef}>
         {messages.length === 0 && (
           <li className="live-chat__empty">No messages yet. Start the conversation.</li>
         )}

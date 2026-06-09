@@ -33,6 +33,7 @@
   gap: 12px;
   max-height: 260px;
   overflow-y: auto;
+  scroll-behavior: smooth;
   padding: 0 6px 0 0;
   margin: 0 0 16px;
 }
@@ -213,4 +214,9 @@
 .chat-input input:read-only {
   cursor: pointer;
   background: #f8f6ff;
+}
+
+.live-chat__scroll-anchor {
+  height: 1px;
+  list-style: none;
 }
