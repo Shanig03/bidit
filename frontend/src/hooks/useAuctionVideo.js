@@ -36,7 +36,7 @@ export function useAuctionVideo(auction, currentUserId) {
   }, [localCameraTrack, videoProfile]);
 
   useJoin({
-    appid: 'YOUR_AGORA_APP_ID', 
+    appid: '8c90d46469d644e8bf65467f745862f7', 
     channel: auction?.agoraChannelName || `auction-${auction?.id}`,
     token: null, 
   }, isJoined);
