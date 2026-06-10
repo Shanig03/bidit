@@ -95,6 +95,11 @@ export function useLogin() {
     setError('');
     setLoading(true);
 
+    const credential = await loginWithGoogle();
+    const localUser = await validateUserIsNotBlocked(credential, logout);
+
+      updateLocalUser(localUser);
+
     try {
       // 1. Authenticate with Google
       const user = credential.user;
@@ -109,10 +114,7 @@ export function useLogin() {
       });
 
       navigate('/dashboard');
-      const credential = await loginWithGoogle();
-      const localUser = await validateUserIsNotBlocked(credential, logout);
-
-      updateLocalUser(localUser);
+      
 
       navigate(getRedirectPathByRole(localUser.role), { replace: true });
     } catch (err) {
