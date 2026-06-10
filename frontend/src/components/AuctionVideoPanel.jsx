@@ -100,8 +100,8 @@ function AuctionVideoPanel({ auction, currentUserId, liveViewers }) {
             </button>
           )}
 
-          <button type="button">🔊</button>
-          <button type="button">⛶</button>
+          {/* <button type="button">🔊</button>
+          <button type="button">⛶</button> */}
         </div>
 
         <div className="avp-seller" style={{ zIndex: 12 }}>
