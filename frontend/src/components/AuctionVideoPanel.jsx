@@ -61,6 +61,7 @@ function AuctionVideoPanel({ auction, currentUserId, liveViewers }) {
           </span>
         </div>
 
+        {/* --- ACTIONS TOOLBAR --- */}
         <div className="avp-actions" style={{ zIndex: 12 }}>
           {isHost && (
             <select 
@@ -73,6 +74,32 @@ function AuctionVideoPanel({ auction, currentUserId, liveViewers }) {
               <option value="1080p_1">1080p High-Def</option>
             </select>
           )}
+
+          {/* ADDED: End Stream Button displays only when the host is actively streaming */}
+          {isHost && isJoined && (
+            <button 
+              type="button" 
+              className="avp-end-btn"
+              onClick={() => setIsJoined(false)}
+              style={{
+                backgroundColor: '#ff3b3b',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 12px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                marginRight: '8px',
+                fontSize: '0.85rem',
+                transition: 'background 0.2s'
+              }}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#d32f2f'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#ff3b3b'}
+            >
+              🛑 End Stream
+            </button>
+          )}
+
           <button type="button">🔊</button>
           <button type="button">⛶</button>
         </div>
