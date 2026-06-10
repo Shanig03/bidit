@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getUserProfile, updateUserProfile } from '../api/usersApi';
+import {
+  getUserProfile,
+  updateUserProfile,
+  getUserNotifications,
+} from '../api/usersApi';
 import { uploadImage, getImageViewUrl } from '../api/uploadService';
 
 function getDisplayName(user) {
@@ -20,6 +24,7 @@ function getInitialProfile(user) {
     bio: 'No bio added yet.',
     photoURL: user?.photoURL || '',
     profileImageKey: '',
+    wonAuctions: [],
     imageFile: null,
   };
 }
@@ -36,6 +41,7 @@ export function useProfile() {
 
   const [profile, setProfile] = useState(() => getInitialProfile(user));
   const [formData, setFormData] = useState(() => getInitialProfile(user));
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
     async function loadProfile() {
@@ -44,6 +50,7 @@ export function useProfile() {
 
         setProfile(fallbackProfile);
         setFormData(fallbackProfile);
+        setNotifications([]);
         setIsLoadingProfile(false);
         return;
       }
@@ -52,7 +59,11 @@ export function useProfile() {
         setIsLoadingProfile(true);
         setErrorMessage('');
 
-        const dbUser = await getUserProfile(user.uid);
+        const [dbUser, userNotifications] = await Promise.all([
+          getUserProfile(user.uid),
+          getUserNotifications(user.uid),
+        ]);
+
         const fallbackProfile = getInitialProfile(user);
 
         const profileImageKey = dbUser.profileImageKey || '';
@@ -74,12 +85,14 @@ export function useProfile() {
 
         setProfile(loadedProfile);
         setFormData(loadedProfile);
+        setNotifications(Array.isArray(userNotifications) ? userNotifications : []);
       } catch (error) {
         setErrorMessage(error.message || 'Failed to load profile.');
 
         const fallbackProfile = getInitialProfile(user);
         setProfile(fallbackProfile);
         setFormData(fallbackProfile);
+        setNotifications([]);
       } finally {
         setIsLoadingProfile(false);
       }
@@ -176,14 +189,13 @@ export function useProfile() {
         email: profile.email,
         bio: cleanBio,
         profileImageKey: profileImageKeyToSave,
-        photoURL: '', 
+        photoURL: '',
       });
-      
 
       if (updateLocalUser) {
-        updateLocalUser({ 
-          displayName: cleanName, 
-          photoURL: photoURLToShow 
+        updateLocalUser({
+          displayName: cleanName,
+          photoURL: photoURLToShow,
         });
       }
 
@@ -193,6 +205,9 @@ export function useProfile() {
         bio: updatedProfile.bio || 'No bio added yet.',
         photoURL: photoURLToShow,
         profileImageKey: updatedProfile.profileImageKey || profileImageKeyToSave,
+        wonAuctions: Array.isArray(updatedProfile.wonAuctions)
+          ? updatedProfile.wonAuctions
+          : profile.wonAuctions || [],
         imageFile: null,
       };
 
@@ -210,6 +225,7 @@ export function useProfile() {
   return {
     user,
     profile,
+    notifications,
     formData,
     isEditing,
     isLoadingProfile,

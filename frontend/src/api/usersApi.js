@@ -62,3 +62,14 @@ export async function updateUserProfile(userId, profileData) {
 
   return data.user;
 }
+
+export async function getUserNotifications(userId) {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/notifications`);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || data.message || 'Failed to fetch notifications');
+  }
+
+  return data.notifications || [];
+}
