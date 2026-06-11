@@ -49,6 +49,7 @@ export function useLiveAuctions() {
         setIsLoading(true);
         setErrorMessage('');
 
+        // UC-07: Loads active/upcoming auction data from the backend.
         const apiAuctions = await getAuctions();
         const mappedAuctions = apiAuctions.map(mapAuctionToCardAuction);
 
@@ -63,6 +64,7 @@ export function useLiveAuctions() {
     loadAuctions();
   }, []);
 
+  // UC-07: Lets users add or remove category filters.
   const toggleCategory = (category) => {
     setSelectedCategories((prevCategories) => {
       if (prevCategories.includes(category)) {
@@ -77,6 +79,7 @@ export function useLiveAuctions() {
     setSelectedCategories([]);
   };
 
+  // UC-07: Applies text search and category filtering to the auction list.
   const filteredAuctions = auctions.filter((auction) => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
     const auctionCategory = auction.category?.trim().toLowerCase();
@@ -98,6 +101,7 @@ export function useLiveAuctions() {
     return matchesCategory && matchesSearch;
   });
 
+  // UC-07: Counts LIVE auctions for the page badge.
   const liveAuctionsCount = auctions.filter(
     (auction) => auction.status === 'LIVE'
   ).length;

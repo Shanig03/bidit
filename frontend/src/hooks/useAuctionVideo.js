@@ -10,6 +10,7 @@ export function useAuctionVideo(auction, currentUserId) {
   const [localCameraTrack, setLocalCameraTrack] = useState(null);
   const [localMicrophoneTrack, setLocalMicrophoneTrack] = useState(null);
 
+  // UC-08/UC-10: Decides whether this user is the host or a viewer.
   const isHost = auction?.sellerId === currentUserId; 
   const remoteUsers = useRemoteUsers();
   const hostUser = remoteUsers.length > 0 ? remoteUsers[0] : null;
@@ -28,6 +29,7 @@ export function useAuctionVideo(auction, currentUserId) {
 
         if (ignore) return;
 
+        // UC-08/UC-10: Joins the Agora auction channel before publishing or watching video.
         // 1. Join channel securely
         await client.join(
           '8c90d46469d644e8bf65467f745862f7', 
@@ -43,11 +45,13 @@ export function useAuctionVideo(auction, currentUserId) {
           return;
         }
 
+        // UC-08: Host creates microphone/camera tracks and publishes the live broadcast.
         if (isHost) {
           // 2. Build local media tracks using aligned core prototype references
           micTrack = await AgoraRTC.createMicrophoneAudioTrack();
           if (ignore) { micTrack.stop(); micTrack.close(); return; }
 
+          // UC-08: Uses the selected stream quality when creating the camera track.
           camTrack = await AgoraRTC.createCameraVideoTrack({ encoderConfig: videoProfile });
           if (ignore) { 
             micTrack.stop(); micTrack.close(); 
@@ -97,6 +101,7 @@ export function useAuctionVideo(auction, currentUserId) {
     };
   }, [isJoined, client, isHost, videoProfile]);
 
+  // UC-10: Remote users come from Agora and are used to show the host stream.
   return {
     isJoined,
     setIsJoined,

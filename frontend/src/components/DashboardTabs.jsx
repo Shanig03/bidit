@@ -1,5 +1,6 @@
 import './DashboardTabs.css';
 
+// UC-17: Switches between My Favorites and My Bids.
 function DashboardTabs({ tabs, activeTab, onChange }) {
   return (
     <div className="dashboard-tabs" role="tablist" aria-label="Dashboard tabs">

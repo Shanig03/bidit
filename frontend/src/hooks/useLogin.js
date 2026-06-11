@@ -23,6 +23,7 @@ function getInitialBlockedMessage() {
   return sessionStorage.getItem('authBlockedMessage') || '';
 }
 
+// UC-05: Checks DynamoDB status so blocked users are signed out right away.
 async function validateUserIsNotBlocked(firebaseCredential, logout) {
   const firebaseUser = firebaseCredential?.user;
 
@@ -30,6 +31,7 @@ async function validateUserIsNotBlocked(firebaseCredential, logout) {
     throw new Error('Failed to load user data.');
   }
 
+  // UC-02/UC-03: Loads the DynamoDB profile that matches the Firebase UID.
   const dbProfile = await getUserProfile(firebaseUser.uid);
   const status = normalizeStatus(dbProfile?.status);
 
@@ -64,6 +66,7 @@ export function useLogin() {
   const [error, setError] = useState(getInitialBlockedMessage);
   const [loading, setLoading] = useState(false);
 
+  // UC-03: Sends already logged-in users to the right page for their role.
   useEffect(() => {
     if (!authLoading && user && !sessionStorage.getItem('authBlockedMessage')) {
       const role = normalizeRole(user.role);
@@ -71,15 +74,18 @@ export function useLogin() {
     }
   }, [authLoading, user, navigate]);
 
+  // UC-03: Starts the email and password login flow.
   const executeLogin = async (email, password) => {
     sessionStorage.removeItem('authBlockedMessage');
     setError('');
     setLoading(true);
 
     try {
+      // UC-03: Firebase verifies the email/password and returns the logged-in user.
       const credential = await login(email, password);
       const localUser = await validateUserIsNotBlocked(credential, logout);
 
+      // UC-03: Stores the user profile/token info locally before redirecting by role.
       updateLocalUser(localUser);
 
       navigate(getRedirectPathByRole(localUser.role), { replace: true });
@@ -90,11 +96,13 @@ export function useLogin() {
     }
   };
 
+  // UC-02: Starts Google login/sign-up for returning or new Google users.
   const executeGoogleLogin = async () => {
     sessionStorage.removeItem('authBlockedMessage');
     setError('');
     setLoading(true);
 
+    // UC-02: Firebase returns the Google user and JWT-backed session.
     const credential = await loginWithGoogle();
     const localUser = await validateUserIsNotBlocked(credential, logout);
 
@@ -104,6 +112,7 @@ export function useLogin() {
       // 1. Authenticate with Google
       const user = credential.user;
 
+      // UC-02: Keeps the Google profile in sync with DynamoDB.
       // 2. Sync profile data to DynamoDB
       // We use 'displayName' to match your updated Python Lambda schema
       await createUserProfile({

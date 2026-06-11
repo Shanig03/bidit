@@ -17,6 +17,7 @@ const resolutionMap = {
   '1080p High Definition': '1080p_1',
 };
 
+// UC-18: Calculates the auction end time from the selected duration.
 function calculateEndsAt(startTimeString, durationLabel) {
   const selectedDuration = durationOptions.find((d) => d.label === durationLabel);
   const hoursToAdd = selectedDuration ? selectedDuration.hours : 24;
@@ -47,6 +48,7 @@ export function useGoLive() {
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // UC-18: Validates the form and starts the create-auction request.
   async function handleStartAuction(event) {
     event.preventDefault();
     setServerError('');
@@ -73,6 +75,7 @@ export function useGoLive() {
     try {
       setIsSubmitting(true);
 
+      // UC-18: Picks the Agora stream profile and decides LIVE vs UPCOMING.
       const selectedAgoraProfile = resolutionMap[streamQuality] || '720p_1';
       const startDateTime = new Date(startTime);
       const isScheduled = startDateTime > new Date();
@@ -90,6 +93,7 @@ export function useGoLive() {
         imageUrl: '',
         imageKey: '',
         imageKeys: [],
+        // UC-18: Generates the Agora channel name stored with the auction.
         agoraChannelName: `auction-${Date.now()}`,
         videoProfile: selectedAgoraProfile,
         status: isScheduled ? 'UPCOMING' : 'LIVE',
@@ -97,6 +101,7 @@ export function useGoLive() {
 
       const createdAuctionId = result?.auction?.auctionId;
 
+      // UC-18: Uploads selected auction images to S3 using presigned URLs.
       if (productImageFiles.length > 0 && createdAuctionId) {
         const uploadedImageKeys = [];
 
@@ -135,6 +140,7 @@ export function useGoLive() {
     }
   }
 
+  // UC-18: Stores selected image files and creates preview URLs.
   function handleProductImageSelect(files, validationError = '') {
     setProductImageError(validationError);
 

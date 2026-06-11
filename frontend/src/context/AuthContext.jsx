@@ -32,6 +32,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // UC-03: Watches Firebase Auth and stores the token/profile for the session.
     const unsubscribe = authService.subscribeToAuthChanges(async (firebaseUser) => {
       setLoading(true);
 
@@ -42,6 +43,7 @@ export function AuthProvider({ children }) {
 
           const status = normalizeStatus(dbProfile?.status);
 
+          // UC-05/UC-21: Enforces blocked users by logging them out automatically.
           if (status === 'BLOCKED') {
             await authService.logout();
             setUser(null);
@@ -85,6 +87,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!user?.uid) return undefined;
 
+    // UC-05/UC-21: Listens for admin block changes while the user is already logged in.
     const userStatusRef = ref(realtimeDb, `userStatuses/${user.uid}/status`);
 
     const unsubscribeStatus = onValue(userStatusRef, async (snapshot) => {

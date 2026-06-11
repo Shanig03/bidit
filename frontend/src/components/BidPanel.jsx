@@ -11,6 +11,7 @@ function normalizeStatus(status) {
 }
 
 // 1. Helper function to format the ISO date string into a readable format
+// UC-13: Formats the auction end time shown beside the bid input.
 const formatDateTime = (isoString) => {
   if (!isoString || isoString === 'Not set') return 'Not set';
   return new Date(isoString).toLocaleString('en-US', {
@@ -46,6 +47,7 @@ function BidPanel({ auction, currentBid, liveViewers = 0, onPlaceBid, favoriteBu
   const isAuctionUpcoming = auctionStatus === 'UPCOMING';
   const isAuctionEnded = auctionStatus === 'ENDED';
 
+  // UC-13/UC-14: Disables bidding while submitting or after/before the auction window.
   const isBidDisabled = isSubmitting || isAuctionUpcoming || isAuctionEnded;
 
   function getDisabledReason() {
@@ -66,6 +68,7 @@ function BidPanel({ auction, currentBid, liveViewers = 0, onPlaceBid, favoriteBu
     navigate('/login', { state: { from: location } });
   }
 
+  // UC-14: Checks login before allowing the bid submit handler to run.
   function handleProtectedBid() {
     if (!user) {
       setAuthMessage('You must be logged in to perform this action.');

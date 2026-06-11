@@ -7,9 +7,11 @@ export function useCountdown(endsAt, isUpcoming) {
     // Don't run the live countdown if it hasn't started or has no end date
     if (isUpcoming || !endsAt) return;
 
+    // UC-13: Calculates the remaining countdown time until the auction ends.
     function calculateTimeRemaining() {
       const difference = new Date(endsAt) - new Date();
 
+      // UC-13: Marks the countdown as ended when time runs out.
       if (difference <= 0) {
         setTimeLeft('Ended');
         return;
@@ -28,6 +30,7 @@ export function useCountdown(endsAt, isUpcoming) {
     }
 
     calculateTimeRemaining();
+    // UC-13: Runs the countdown interval so the display keeps updating.
     const timerInterval = setInterval(calculateTimeRemaining, 60000);
 
     return () => clearInterval(timerInterval);

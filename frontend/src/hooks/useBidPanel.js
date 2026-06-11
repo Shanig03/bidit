@@ -13,6 +13,7 @@ export function useBidPanel(auction, currentBid, watchers, onPlaceBid) {
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // UC-14: Handles bid validation before sending the bid request.
   async function handleSubmitBid() {
     setErrorMessage('');
     setSuccessMessage('');
@@ -31,6 +32,7 @@ export function useBidPanel(auction, currentBid, watchers, onPlaceBid) {
 
     try {
       setIsSubmitting(true);
+      // UC-14: Sends the valid bid to the auction details flow/API.
       await onPlaceBid(numericBid);
       
       setSuccessMessage('Bid placed successfully.');

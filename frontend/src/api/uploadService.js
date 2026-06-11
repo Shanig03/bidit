@@ -1,5 +1,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+// UC-18/UC-19: Requests a presigned S3 URL for image uploads.
 export async function getPresignedUploadUrl({
   uploadType,
   file,
@@ -28,6 +29,7 @@ export async function getPresignedUploadUrl({
   return response.json();
 }
 
+// UC-18/UC-19: Uploads the selected image file directly to S3.
 export async function uploadFileToS3(uploadUrl, file) {
   const response = await fetch(uploadUrl, {
     method: 'PUT',

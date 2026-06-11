@@ -65,6 +65,7 @@ export default function ProfileComp() {
     );
   }
 
+  // UC-19: Edit mode lets the user update profile text and image.
   if (isEditing) {
     return (
       <PageContainer className="profile-page">
@@ -212,6 +213,7 @@ export default function ProfileComp() {
 
         <section className="profile-main-col">
           <div className="profile-activity-stack">
+            {/* UC-19: Displays auctions won on the profile page. */}
             <article className="card profile-panel profile-auctions-won-panel">
               <div className="profile-panel__header">
                 <h3>Auctions Won</h3>
@@ -247,6 +249,7 @@ export default function ProfileComp() {
               )}
             </article>
 
+            {/* UC-20: Displays notifications only; there is no mark-as-read action here. */}
             <article className="card profile-panel profile-notifications-panel">
               <div className="profile-panel__header">
                 <h3>Notifications</h3>
