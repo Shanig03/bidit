@@ -207,7 +207,7 @@ The DynamoDB table schemas were manually verified from the AWS Console. All list
 | `Notifications` | Partition key `userId` (String); sort key `notificationId` (String) | On-demand | Stores user notifications, including winner notifications created after auction closing. |
 | `Users` | Partition key `userId` (String); no sort key | On-demand | Stores user profiles, roles, blocked status, favorite auctions, bidded auctions, and won auctions. |
 
-`getUserBids.py` also requires a `Bids` table GSI named `bidderId-placedAt-index` to retrieve a user's bids. Keep this index documented and verify it in the DynamoDB Indexes tab or IaC before deploying changes. `createUser.py` reads the users table name from `USERS_TABLE_NAME`; most other Lambdas use hard-coded table names.
+`getUserBids.py` uses the manually verified `Bids` table GSI `bidderId-placedAt-index` to retrieve a user's bids. The verified GSI is active, uses partition key `bidderId` (String), sort key `placedAt` (String), and on-demand capacity mode. Keep this index documented and preserve it in IaC/deployment changes. `createUser.py` reads the users table name from `USERS_TABLE_NAME`; most other Lambdas use hard-coded table names.
 
 ### S3
 
@@ -1457,7 +1457,7 @@ Purpose: Individual bid history and dashboard bid aggregation.
 
 Verified table schema: partition key `auctionId` (String), sort key `placedAt` (String), on-demand capacity mode. This supports querying bid records by auction ordered by `placedAt`.
 
-Required secondary index: `bidderId-placedAt-index` is referenced by `getUserBids.py` to retrieve a user's bids. This GSI must exist and should be verified in the DynamoDB Indexes tab or IaC before deployment changes.
+Verified secondary index: `bidderId-placedAt-index` exists on the `Bids` table with status `Active`, partition key `bidderId` (String), sort key `placedAt` (String), and on-demand capacity mode. `getUserBids.py` uses this GSI to retrieve a user's bids.
 
 Main fields:
 
@@ -1670,7 +1670,7 @@ Set `VITE_API_BASE_URL` in `frontend/.env` or the deployment environment. All AP
 - If field names collide with DynamoDB reserved words, use expression attribute names.
 - For numbers, use `Decimal` in Python Lambda before writing to DynamoDB.
 - The manually verified tables use on-demand capacity. For production data protection, consider enabling DynamoDB point-in-time recovery and document the setting in IaC.
-- Preserve the `Bids` table key schema (`auctionId`, `placedAt`) and the required `bidderId-placedAt-index` GSI when changing bid storage.
+- Preserve the `Bids` table key schema (`auctionId`, `placedAt`) and the verified active `bidderId-placedAt-index` GSI when changing bid storage.
 
 ### Maintain the Step Functions auction-closing workflow
 
@@ -1755,7 +1755,7 @@ This section records corrections made from the verified `BiditAPI` Swagger expor
 ### Remaining production recommendations
 
 - Add an API Gateway authorizer or backend Firebase token validation before production; Method Request settings were manually verified as `Authorization: NONE`.
-- Keep the `Bids` table GSI requirement `bidderId-placedAt-index` documented and verify the index in AWS/IaC before deployment changes.
+- Keep the verified active `Bids` table GSI `bidderId-placedAt-index` documented and preserve it in AWS/IaC deployment changes.
 - Parameterize AWS account-specific Lambda ARNs in `backend/step-functions/WinnerMachine.asl.json` when creating reusable deployment scripts or IaC.
 - Consider enabling DynamoDB point-in-time recovery for production data protection.
 - Review CloudWatch log retention, alarms, and monitoring settings before production deployment.
