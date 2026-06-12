@@ -23,6 +23,7 @@ function AuctionVideoPanel({ auction, currentUserId, liveViewers }) {
         
         {isJoined ? (
           <div className="avp-video-wrapper">
+            {/* UC-08/UC-10: Shows host preview or viewer's subscribed host stream. */}
             {isHost ? (
               <LocalUser
                 cameraOn={true}
@@ -41,6 +42,7 @@ function AuctionVideoPanel({ auction, currentUserId, liveViewers }) {
           </div>
         ) : (
           <div className="avp-connect-overlay">
+            {/* UC-08/UC-10: Host starts broadcasting, while viewers connect to watch. */}
             <button 
               type="button" 
               className="avp-connect-btn" 
@@ -63,6 +65,7 @@ function AuctionVideoPanel({ auction, currentUserId, liveViewers }) {
 
         {/* --- ACTIONS TOOLBAR --- */}
         <div className="avp-actions" style={{ zIndex: 12 }}>
+          {/* UC-08: Host can pick the broadcast video quality. */}
           {isHost && (
             <select 
               className="avp-res-dropdown"
@@ -76,6 +79,7 @@ function AuctionVideoPanel({ auction, currentUserId, liveViewers }) {
           )}
 
           {/* ADDED: End Stream Button displays only when the host is actively streaming */}
+          {/* UC-08: Ends the host broadcast by leaving the joined stream state. */}
           {isHost && isJoined && (
             <button 
               type="button" 

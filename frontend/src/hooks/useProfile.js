@@ -44,6 +44,7 @@ export function useProfile() {
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
+    // UC-19/UC-20: Loads profile details, auctions won, and notifications.
     async function loadProfile() {
       if (!user?.uid) {
         const fallbackProfile = getInitialProfile(user);
@@ -59,6 +60,7 @@ export function useProfile() {
         setIsLoadingProfile(true);
         setErrorMessage('');
 
+        // UC-20: Notifications are loaded for display only in this version.
         const [dbUser, userNotifications] = await Promise.all([
           getUserProfile(user.uid),
           getUserNotifications(user.uid),
@@ -101,6 +103,7 @@ export function useProfile() {
     loadProfile();
   }, [user?.uid]);
 
+  // UC-19: Opens edit mode with the current profile values.
   function handleStartEdit() {
     setFormData(profile);
     setStatusMessage('');
@@ -124,6 +127,7 @@ export function useProfile() {
     }));
   }
 
+  // UC-19: Previews the selected profile image before saving.
   function handleImageChange(event) {
     const file = event.target.files?.[0];
 
@@ -149,6 +153,7 @@ export function useProfile() {
     }));
   }
 
+  // UC-19: Saves edited profile fields and optional image upload.
   async function handleSaveProfile(event) {
     event.preventDefault();
 
@@ -174,6 +179,7 @@ export function useProfile() {
       let photoURLToShow = formData.photoURL || '';
 
       if (formData.imageFile) {
+        // UC-19: Uploads the profile image to S3 and saves the returned key.
         const uploadedImageKey = await uploadImage({
           uploadType: 'profile',
           file: formData.imageFile,

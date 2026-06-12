@@ -93,6 +93,7 @@ export function useAuctionDetails() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // UC-09: Shows how many users are currently on this auction page.
   const liveViewers = useLiveViewerCount(selectedAuctionId, auction?.watchers || 0);
 
   useEffect(() => {
@@ -132,6 +133,7 @@ export function useAuctionDetails() {
       `auctions/${selectedAuctionId}/viewers/${currentUserId}`
     );
 
+    // UC-09: Adds this user to page presence and removes them on disconnect.
     onDisconnect(myViewerRef).remove().then(() => {
       set(myViewerRef, true);
     });
@@ -141,6 +143,7 @@ export function useAuctionDetails() {
     };
   }, [selectedAuctionId, currentUserId]);
 
+  // UC-14: Sends the bid to the backend/Lambda so DynamoDB can save it.
   async function handlePlaceBid(amount) {
     if (!user || !selectedAuctionId) {
       throw new Error('You must be logged in to place a bid.');
@@ -153,6 +156,7 @@ export function useAuctionDetails() {
       amount,
     });
 
+    // UC-14/UC-15: Reloads auction price and recent bids after DynamoDB updates.
     const updatedAuction = await getAuctionById(selectedAuctionId);
     const updatedBids = await getBidsByAuctionId(selectedAuctionId);
 

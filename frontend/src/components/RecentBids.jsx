@@ -14,7 +14,9 @@ const formatDateTime = (isoString) => {
   });
 };
 
+// UC-15: Shows the recent bids loaded from the backend/Lambda/DynamoDB flow.
 function RecentBids({ bids = [] }) {
+  // UC-15: Keeps the latest bid feed clean before rendering it newest-first from the API data.
   const uniqueBids = Array.from(
     new Map(
       bids.map((bid) => [
@@ -25,6 +27,7 @@ function RecentBids({ bids = [] }) {
     ).values()
   );
 
+  // UC-15: Formats the bidder name shown beside each amount.
   const getBidderDisplayName = (bid) => {
     // 2. Put bid.displayName at the absolute front of the line!
     const rawName = bid.displayName || bid.username || bid.bidderName || bid.name || bid.bidderEmail || bid.bidderId || 'Anonymous bidder';
@@ -54,6 +57,7 @@ function RecentBids({ bids = [] }) {
           <p className="recent-bids__empty">No bids yet.</p>
         ) : (
           <ul>
+            {/* UC-15: Renders the recent bid rows with bidder details and amounts. */}
             {uniqueBids.map((bid) => {
               const displayName = getBidderDisplayName(bid);
               const timeString = bid.placedAt || bid.createdAt;

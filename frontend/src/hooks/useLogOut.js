@@ -10,6 +10,7 @@ export function useLogout() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // UC-04: Signs the user out and clears the app session.
   const executeLogout = async () => {
     setError('');
     setLoading(true);

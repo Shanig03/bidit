@@ -62,6 +62,7 @@ function LiveChat({ auctionId }) {
       return undefined;
     }
 
+    // UC-11: Listens for the latest chat messages for this auction.
     const messagesRef = ref(realtimeDb, `auctionChats/${auctionId}/messages`);
     const messagesQuery = query(
       messagesRef,
@@ -101,6 +102,7 @@ function LiveChat({ auctionId }) {
       return;
     }
 
+    // UC-11: Auto-scrolls so the newest chat message stays visible.
     messagesList.scrollTo({
       top: messagesList.scrollHeight,
       behavior: 'smooth',
@@ -115,6 +117,7 @@ function LiveChat({ auctionId }) {
     navigate('/login', { state: { from: location } });
   }
 
+  // UC-11: Validates and sends a new live chat message.
   async function handleSendMessage(event) {
     event.preventDefault();
 
@@ -145,6 +148,7 @@ function LiveChat({ auctionId }) {
 
       const messagesRef = ref(realtimeDb, `auctionChats/${auctionId}/messages`);
 
+      // UC-11: Saves the chat message to Firebase for everyone listening.
       await push(messagesRef, {
         auctionId,
         userId: user.uid,
@@ -169,6 +173,7 @@ function LiveChat({ auctionId }) {
         <span>{messages.length} messages</span>
       </div>
 
+      {/* UC-11: Renders the live chat message feed. */}
       <ul className="live-chat__messages" ref={messagesListRef}>
         {messages.length === 0 && (
           <li className="live-chat__empty">No messages yet. Start the conversation.</li>
@@ -205,6 +210,7 @@ function LiveChat({ auctionId }) {
 
       {errorMessage && <p className="live-chat__error">{errorMessage}</p>}
 
+      {/* UC-11: Chat input for typing and submitting a message. */}
       <form className="chat-input" onSubmit={handleSendMessage}>
         <input
           type="text"

@@ -23,6 +23,7 @@ export function useAdmin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // UC-21: Loads the admin user list from the backend.
   const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
@@ -39,6 +40,7 @@ export function useAdmin() {
     }
   }, [user]);
 
+  // UC-21: Blocks or unblocks a user and updates enforcement data.
   const handleToggleBlock = async (userId, currentStatus) => {
     if (!userId) {
       alert('Missing user id.');
@@ -52,6 +54,7 @@ export function useAdmin() {
         1. Update the official source of truth: DynamoDB.
         This is what prevents the user from logging in again later.
       */
+      // UC-21: Persists the blocked/active status in DynamoDB through the admin API.
       await adminApi.updateUserStatus(userId, nextStatus, user?.token);
 
       /*
@@ -82,6 +85,7 @@ export function useAdmin() {
     }
   };
 
+  // UC-21: Promotes a normal user to admin.
   const handleMakeAdmin = async (userId) => {
     if (!userId) {
       alert('Missing user id.');
@@ -111,6 +115,7 @@ export function useAdmin() {
     }
   };
 
+  // UC-22: Loads auctions for the admin management page.
   const loadAuctions = useCallback(async () => {
     try {
       setLoading(true);
@@ -125,6 +130,7 @@ export function useAdmin() {
     }
   }, [user]);
 
+  // UC-22: Deletes an auction and refreshes the local list.
   const handleDeleteAuction = async (auctionId) => {
     if (!auctionId) {
       alert('Missing auction id.');

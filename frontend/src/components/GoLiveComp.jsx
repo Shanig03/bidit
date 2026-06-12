@@ -41,6 +41,7 @@ export default function GoLiveComp(props) {
         <p>Set up your product details and stream settings.</p>
       </header>
 
+      {/* UC-18: Auction form for product, timing, category, and price details. */}
       <form className="go-live-card card" onSubmit={handleStartAuction}>
         {serverError && <p className="error-message">{serverError}</p>}
         {successMessage && <p className="success-message">{successMessage}</p>}
@@ -126,6 +127,7 @@ export default function GoLiveComp(props) {
           </div>
         </div>
 
+        {/* UC-18: Multi-image selector with previews before uploading. */}
         <ProductImageUploader
           selectedFiles={productImageFiles}
           previewUrls={productImagePreviewUrls}

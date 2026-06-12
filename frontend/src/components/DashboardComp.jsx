@@ -29,10 +29,12 @@ export default function DashboardComp() {
     bidsError,
   } = useDashboard();
 
+  // UC-17: Loads favorites for the My Favorites dashboard tab.
   const { favorites } = useFavorites();
 
   const activeFavorites = favorites.filter((auction) => !isAuctionEnded(auction));
 
+  // UC-17: Renders active favorite auction cards.
   function renderFavoriteAuctions() {
     if (activeFavorites.length === 0) {
       return <p className="dashboard-message">No active favorite auctions yet.</p>;
@@ -50,6 +52,7 @@ export default function DashboardComp() {
     );
   }
 
+  // UC-17: Renders the user's bid history tab.
   function renderMyBids() {
     if (isLoadingBids) {
       return <p className="dashboard-message">Loading your bids...</p>;

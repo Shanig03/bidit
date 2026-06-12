@@ -3,6 +3,7 @@ import { auth } from "../firebase/firebaseConfig"; // Ensure this path points to
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Helper to grab the Firebase token for backend verification
+// UC-02/UC-03: Adds the Firebase JWT so the backend can verify the user.
 async function getAuthHeaders() {
   const headers = { "Content-Type": "application/json" };
   const user = auth.currentUser;
@@ -63,6 +64,7 @@ export async function updateUserProfile(userId, profileData) {
   return data.user;
 }
 
+// UC-20: Loads notifications for display without marking them as read.
 export async function getUserNotifications(userId) {
   const response = await fetch(`${API_BASE_URL}/users/${userId}/notifications`);
   const data = await response.json();

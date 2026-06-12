@@ -32,6 +32,7 @@ export default function HomeComp() {
 
   return (
     <PageContainer className="home-page">
+      {/* UC-06: Home hero section with the main project message. */}
       <section className="home-hero card">
         <h1 className="home-title">
           Bid <span>live.</span>
@@ -45,6 +46,7 @@ export default function HomeComp() {
           Place real-time bids and win incredible products from around the world.
         </p>
 
+        {/* UC-06: CTA buttons take users to live auctions or auction creation. */}
         <div className="home-cta-row">
           <Link to="/auctions">
             <Button>Watch Live Auctions</Button>
@@ -75,6 +77,7 @@ export default function HomeComp() {
         </div>
       </section>
 
+      {/* UC-06: Shows the trending live auction cards on the home page. */}
       <section className="home-trending">
         <div className="home-trending-header">
           <div>

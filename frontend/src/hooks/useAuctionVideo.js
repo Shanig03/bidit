@@ -10,6 +10,7 @@ export function useAuctionVideo(auction, currentUserId) {
   const [localCameraTrack, setLocalCameraTrack] = useState(null);
   const [localMicrophoneTrack, setLocalMicrophoneTrack] = useState(null);
 
+  // UC-08/UC-10: Decides whether this user is the host or a viewer.
   const isHost = auction?.sellerId === currentUserId; 
   const remoteUsers = useRemoteUsers();
   const hostUser = remoteUsers.length > 0 ? remoteUsers[0] : null;
@@ -40,7 +41,7 @@ export function useAuctionVideo(auction, currentUserId) {
         const token = await getAgoraToken(channelName, uid, isHost);
 
         if (ignore) return;
-
+        
         // 4. Get your App ID from your environment variables
         const appId = import.meta.env.VITE_AGORA_APP_ID;
 
@@ -54,10 +55,12 @@ export function useAuctionVideo(auction, currentUserId) {
           return;
         }
 
+        // UC-08: Host creates microphone/camera tracks and publishes the live broadcast.
         if (isHost) {
           micTrack = await AgoraRTC.createMicrophoneAudioTrack();
           if (ignore) { micTrack.stop(); micTrack.close(); return; }
 
+          // UC-08: Uses the selected stream quality when creating the camera track.
           camTrack = await AgoraRTC.createCameraVideoTrack({ encoderConfig: videoProfile });
           if (ignore) { 
             micTrack.stop(); micTrack.close(); 
@@ -106,6 +109,7 @@ export function useAuctionVideo(auction, currentUserId) {
     };
   }, [isJoined, client, isHost, videoProfile, auction]); // Make sure auction is in the dependency array
 
+  // UC-10: Remote users come from Agora and are used to show the host stream.
   return {
     isJoined,
     setIsJoined,

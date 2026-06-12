@@ -5,6 +5,7 @@ import { getUserBids } from '../api/bidsService';
 import { useAuth } from '../context/AuthContext';
 import { getDashboardItems } from '../data/mockDashboard';
 
+// UC-17: Dashboard tabs for favorites and bids.
 export const tabs = [
   { id: 'favorites', label: 'My Favorites' },
   { id: 'bids', label: 'My Bids' }
@@ -112,6 +113,7 @@ export function useDashboard() {
   }, []);
 
   useEffect(() => {
+    // UC-17: Loads this user's bids when the My Bids tab is opened.
     async function loadMyBids() {
       if (activeTab !== 'bids') {
         return;
@@ -127,6 +129,7 @@ export function useDashboard() {
         setIsLoadingBids(true);
         setBidsError('');
 
+        // UC-17: Gets bid data from the backend and maps it for dashboard display.
         const bids = await getUserBids(user.uid);
         setMyBids(bids.map(mapBidToDashboardItem));
       } catch (error) {

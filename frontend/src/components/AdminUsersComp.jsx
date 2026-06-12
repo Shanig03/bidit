@@ -13,6 +13,7 @@ function getInitials(name = '') {
 export default function AdminUsersComp({ users = [], onToggleBlock, onMakeAdmin }) {
   const [searchTerm, setSearchTerm] = useState('');
 
+  // UC-21: Filters the admin user list by name or email.
   const filteredUsers = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
@@ -49,6 +50,7 @@ export default function AdminUsersComp({ users = [], onToggleBlock, onMakeAdmin 
         </div>
 
         <span className="admin-count-badge">
+          {/* UC-21: Shows how many users match the current search. */}
           {filteredUsers.length} / {users.length} users
         </span>
       </div>
@@ -122,6 +124,7 @@ export default function AdminUsersComp({ users = [], onToggleBlock, onMakeAdmin 
                     </td>
 
                     <td>
+                      {/* UC-21: Admin actions for block/unblock and promote. */}
                       <div className="admin-action-group">
                         <button
                           type="button"

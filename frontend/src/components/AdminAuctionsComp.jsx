@@ -51,6 +51,7 @@ function getMainImageKey(auction) {
   return '';
 }
 
+// UC-22: One admin auction card with view and delete actions.
 function AdminAuctionCard({ auction, onDelete, onView }) {
   const status = getStatusLabel(auction.status);
   const displayPrice = auction.currentPrice ?? auction.startingPrice ?? 0;
@@ -144,6 +145,7 @@ export default function AdminAuctionsComp({ auctions = [], onDelete }) {
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // UC-22: Filters auctions by the searched title prefix.
   const filteredAuctions = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
@@ -157,11 +159,13 @@ export default function AdminAuctionsComp({ auctions = [], onDelete }) {
     });
   }, [auctions, searchTerm]);
 
+  // UC-22: Applies the admin auction search term.
   function handleSearch(event) {
     event.preventDefault();
     setSearchTerm(searchInput);
   }
 
+  // UC-22: Opens the selected auction page from admin.
   function handleViewAuction(auctionId) {
     if (!auctionId) return;
     navigate(`/auction/${auctionId}`);

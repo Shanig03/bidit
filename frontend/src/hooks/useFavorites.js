@@ -24,6 +24,7 @@ export function useFavorites() {
         setIsLoadingFavorites(true);
         setFavoritesError('');
 
+        // UC-16: Loads the user's saved favorites from DynamoDB through the API.
         const savedFavorites = await getFavoriteAuctions(userId);
         setFavorites(savedFavorites);
       } catch (error) {
@@ -36,6 +37,7 @@ export function useFavorites() {
     loadFavorites();
   }, [userId]);
 
+  // UC-16: Checks if the favorite button should show as active.
   function isFavorite(auctionId) {
     return favorites.some(
       (favorite) =>
@@ -43,6 +45,7 @@ export function useFavorites() {
     );
   }
 
+  // UC-16: Adds or removes the auction from favorites, then updates the UI.
   async function toggleFavorite(auction) {
     if (!userId) {
       setFavoritesError('You must be logged in to save favorites.');
