@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-// FIX: Import the exact same core class reference used to build your client
 import AgoraRTC from 'agora-rtc-sdk-ng'; 
 import { useRTCClient, useRemoteUsers } from 'agora-rtc-react';
+import { getAgoraToken } from '../api/agoraApi'; // 1. Import your new API function
 
 export function useAuctionVideo(auction, currentUserId) {
   const client = useRTCClient(); 
@@ -26,15 +26,26 @@ export function useAuctionVideo(auction, currentUserId) {
       try {
         const uid = Math.floor(Math.random() * 50000) + 1;
 
+        // 2. Dynamically set the channel name based on the current auction
+        const channelName = auction?.agoraChannelName || auction?.id || auction?.auctionId;
+        
+        if (!channelName) {
+          console.error("Stream connection failed: No channel name available.");
+          return;
+        }
+
         if (ignore) return;
 
-        // 1. Join channel securely
-        await client.join(
-          '8c90d46469d644e8bf65467f745862f7', 
-          'test',                            
-          '007eJxTYOgNUnnlaxW9RoynpX0u16ds8ztZp3lZ1bzu3HiZfGT9LA4FBotkS4MUEzMTM8sUMxOTVIukNDNTEzPzNHMTUwszozTztlTNrIZARgatem1WRgYIBPFZGEpSi0sYGACt9hy6', 
-          uid
-        );
+        // 3. Fetch the secure token from your AWS Lambda
+        const token = await getAgoraToken(channelName, uid, isHost);
+
+        if (ignore) return;
+
+        // 4. Get your App ID from your environment variables
+        const appId = import.meta.env.VITE_AGORA_APP_ID;
+
+        // 5. Join the channel dynamically
+        await client.join(appId, channelName, token, uid);
         hasJoined = true;
 
         if (ignore) {
@@ -44,7 +55,6 @@ export function useAuctionVideo(auction, currentUserId) {
         }
 
         if (isHost) {
-          // 2. Build local media tracks using aligned core prototype references
           micTrack = await AgoraRTC.createMicrophoneAudioTrack();
           if (ignore) { micTrack.stop(); micTrack.close(); return; }
 
@@ -58,7 +68,6 @@ export function useAuctionVideo(auction, currentUserId) {
           setLocalMicrophoneTrack(micTrack);
           setLocalCameraTrack(camTrack);
 
-          // 3. Publish directly to stream connection without wrapper interference
           await client.publish([micTrack, camTrack]);
           
           if (ignore) {
@@ -95,7 +104,7 @@ export function useAuctionVideo(auction, currentUserId) {
         client.leave().catch(() => {});
       }
     };
-  }, [isJoined, client, isHost, videoProfile]);
+  }, [isJoined, client, isHost, videoProfile, auction]); // Make sure auction is in the dependency array
 
   return {
     isJoined,
