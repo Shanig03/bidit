@@ -45,7 +45,7 @@ export function useAuctionVideo(auction, currentUserId) {
         // 4. Get your App ID from your environment variables
         const appId = import.meta.env.VITE_AGORA_APP_ID;
 
-        // 5. Join the channel dynamically
+        // UC-08/UC-10: Joins the Agora auction channel before publishing or watching video.
         await client.join(appId, channelName, token, uid);
         hasJoined = true;
 
