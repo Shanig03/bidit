@@ -1,0 +1,10 @@
+[
+  {
+    "IndexName": "bidderId-placedAt-index",
+    "KeySchema": [
+      { "AttributeName": "bidderId", "KeyType": "HASH" },
+      { "AttributeName": "placedAt", "KeyType": "RANGE" }
+    ],
+    "Projection": { "ProjectionType": "ALL" }
+  }
+]

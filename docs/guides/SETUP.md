@@ -1,158 +1,239 @@
-# Local AWS Infrastructure Setup Script
+# BidIt - Local Development Setup Guide
 
-**File:** `scripts/setup-local-aws.sh`
-
-This script automatically provisions the AWS resources required for local BidIt development. It creates DynamoDB tables, provisions a development S3 bucket with a globally unique name, enables bucket versioning, and configures CORS.
-
-## Purpose
-
-Running this script eliminates the need to manually create AWS resources during local development.
-
-Resources created:
-
-* `Users` DynamoDB table
-* `Auctions` DynamoDB table
-* `Bids` DynamoDB table
-* `Notifications` DynamoDB table
-* Development S3 bucket (`bidit-auction-images-dev-<ACCOUNT_ID>`)
+This guide walks you through setting up BidIt. Follow the section corresponding to your operating system.
 
 ---
 
-## Prerequisites
+## Phase 1: Prerequisites
 
-Before running the script, ensure:
+Before beginning, install the following tools:
 
-* AWS CLI is installed.
-* AWS credentials are configured using:
+1. **Node.js (>= 18.0.0) & npm**
+
+   * Download from: https://nodejs.org/
+
+2. **Python (>= 3.11)**
+
+   * Download from: https://python.org/
+   * Windows users: Ensure **Add Python to PATH** is checked during installation.
+
+3. **AWS CLI**
+
+   * Installation Guide: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+   * After installation, configure credentials:
+
+   ```bash
+   aws configure
+   ```
+
+4. **Git**
+
+   * Download from: https://git-scm.com/
+
+---
+
+## Phase 2: Clone Repository & Frontend Setup
+
+Clone the repository and install frontend dependencies:
 
 ```bash
-aws configure
+git clone https://github.com/Shanig03/bidit.git
+cd bidit/frontend
+npm install
 ```
 
-* The authenticated IAM user has permissions for:
-
-  * DynamoDB
-  * S3
-  * STS
-
-* The file `s3-cors-config.json` exists in the project root.
-
----
-
-## Running the Script
-
-From the project root:
-
-```bash
-chmod +x scripts/setup-local-aws.sh
-./scripts/setup-local-aws.sh
-```
-
----
-
-## What the Script Does
-
-### 1. Retrieves AWS Account ID
-
-The script dynamically fetches the current AWS Account ID:
-
-```bash
-aws sts get-caller-identity
-```
-
-This ID is appended to the development bucket name to guarantee global uniqueness.
-
-Example:
+Create a file named:
 
 ```text
-bidit-auction-images-dev-123456789012
+frontend/.env
 ```
 
----
-
-### 2. Creates DynamoDB Tables
-
-The following tables are created using on-demand billing (`PAY_PER_REQUEST`):
-
-| Table         | Primary Key             |
-| ------------- | ----------------------- |
-| Users         | userId                  |
-| Auctions      | auctionId               |
-| Bids          | auctionId + placedAt    |
-| Notifications | userId + notificationId |
-
-#### Bids Secondary Index
-
-The `Bids` table includes the following Global Secondary Index (GSI):
-
-| Index Name              |
-| ----------------------- |
-| bidderId-placedAt-index |
-
-This enables efficient retrieval of bid history by bidder.
-
----
-
-### 3. Creates Development S3 Bucket
-
-A bucket is created using the generated name:
-
-```text
-bidit-auction-images-dev-<ACCOUNT_ID>
-```
-
-The script then:
-
-* Enables versioning
-* Applies the project's CORS configuration
-
----
-
-## Script Output
-
-Upon successful completion, the script displays the generated bucket name:
-
-```text
-BUCKET_NAME=bidit-auction-images-dev-123456789012
-```
-
----
-
-## Required Configuration
-
-After the script completes, update your local Lambda environment file:
+Add the following contents:
 
 ```env
-BUCKET_NAME=bidit-auction-images-dev-123456789012
+VITE_API_BASE_URL=http://localhost:3001
+VITE_AGORA_APP_ID=your-agora-app-id-here
 ```
 
-File:
+---
+
+## Phase 3: Backend Setup
+
+Navigate to the `lambdas` directory and create a Python virtual environment.
+
+### Linux / macOS
+
+```bash
+cd ../lambdas
+
+python3 -m venv venv
+source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+### Windows
+
+```powershell
+cd ..\lambdas
+
+python -m venv venv
+.\venv\Scripts\activate
+
+pip install -r requirements.txt
+```
+
+---
+
+## Phase 4: AWS Infrastructure Setup
+
+Choose the setup method appropriate for your operating system.
+
+### Linux / macOS
+
+Run the shell scripts located in `scripts/Linux/`:
+
+```bash
+cd ..
+
+chmod +x scripts/Linux/*.sh
+
+./scripts/Linux/setup-local-aws.sh
+```
+
+### Windows
+
+Open PowerShell from the project root and run:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+.\scripts\win\setup-local-aws.ps1
+```
+
+---
+
+## Phase 5: Environment Configuration
+
+After the setup script completes, a unique S3 bucket name will be generated.
+
+Create:
 
 ```text
 lambdas/.env.lambda
+```
+
+Populate it with:
+
+```env
+USERS_TABLE_NAME=Users
+AUCTIONS_TABLE_NAME=Auctions
+BIDS_TABLE_NAME=Bids
+NOTIFICATIONS_TABLE_NAME=Notifications
+
+BUCKET_NAME=bidit-auction-images-dev-YOUR_ACCOUNT_ID
+
+AGORA_APP_ID=your-agora-app-id
+AGORA_APP_CERT=your-agora-app-certificate
+
+STATE_MACHINE_ARN=arn:aws:states:us-east-1:YOUR_ACCOUNT_ID:stateMachine:WinnerMachine
+```
+
+Replace:
+
+* `YOUR_ACCOUNT_ID`
+* `your-agora-app-id`
+* `your-agora-app-certificate`
+
+with your actual values.
+
+---
+
+## Phase 6: Run Application
+
+### Start Frontend
+
+Open a terminal in the frontend directory:
+
+```bash
+npm run dev
+```
+
+The application will be available at:
+
+```text
+http://localhost:5173
 ```
 
 ---
 
 ## Verification
 
-Verify the infrastructure was created successfully:
+Verify that the AWS setup script successfully created the required DynamoDB tables:
 
 ```bash
 aws dynamodb list-tables --region us-east-1
 ```
 
+Expected tables:
+
+```text
+Users
+Auctions
+Bids
+Notifications
+```
+
+Verify that the generated S3 bucket exists:
+
 ```bash
 aws s3 ls
 ```
 
-You should see all four DynamoDB tables and the development S3 bucket in the output.
+---
+
+## Troubleshooting
+
+### AWS CLI Not Found
+
+Verify installation:
+
+```bash
+aws --version
+```
+
+If AWS CLI is installed but not found, ensure the installation directory is present in your system PATH.
+
+### Python Dependencies Fail
+
+Upgrade pip and reinstall:
+
+```bash
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### Frontend Dependencies Fail
+
+Clear npm cache and reinstall:
+
+```bash
+npm cache clean --force
+npm install
+```
 
 ---
 
-## Notes
+## Additional Documentation
 
-* The script is idempotent and can be run multiple times.
-* Existing tables and buckets are detected automatically.
-* S3 bucket names are globally unique due to the appended AWS Account ID.
-* This script is intended for development environments only. Production resources are provisioned through CloudFormation.
+For production deployment instructions, see:
+
+```text
+docs/guides/DEPLOYMENT.md
+```
+
+For architecture and API documentation, see:
+
+```text
+docs/ARCHITECTURE.md
+```

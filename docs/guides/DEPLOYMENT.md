@@ -1,102 +1,190 @@
-# Section 09: BidIt System Installation Guide
+# BidIt System Deployment Guide
 
-This document provides step-by-step instructions for deploying the BidIt architecture into a clean AWS production environment.
-
-All scripts and Infrastructure as Code (IaC) templates are designed to dynamically adapt to the hosting AWS Account ID and Region to ensure a zero-conflict deployment.
-
-## Prerequisites
-
-* AWS CLI installed and configured (`aws configure`) with Administrator access.
-* Node.js (>= 18.0.0) & npm.
-* Python 3.11.
+This document provides the exhaustive steps to deploy the BidIt application to AWS.
 
 ---
 
-## Zero-Click Automated Backend Deployment
+## Step 1: Pre-Deployment Preparation
 
-Run these commands from the root directory of the extracted source code.
+Ensure the following files exist in the **project root**:
 
-### Step 1: Deploy Core Infrastructure (CloudFormation)
+### 1. Swagger File
 
-This provisions the DynamoDB tables, dynamically names S3 buckets (using your Account ID), and creates the necessary IAM execution roles.
+* `swagger_api_gateway.json`
+* Must start with:
 
-```bash
-aws cloudformation create-stack \
-  --stack-name bidit-prod-infrastructure \
-  --template-body file://bidit-stack.yaml \
-  --parameters ParameterKey=Environment,ParameterValue=prod \
-  --capabilities CAPABILITY_NAMED_IAM \
-  --region us-east-1
-
-# Wait for stack completion
-aws cloudformation wait stack-create-complete \
-  --stack-name bidit-prod-infrastructure
-```
-
-### Step 2: Deploy Backend Logic (Lambdas & API Gateway)
-
-This script packages all Lambda functions, dynamically injects the AWS Account ID into the API configuration, and deploys the REST API.
-
-```bash
-./scripts/deploy-lambdas.sh
-```
-
-**Note:** The script will output an `API_ID`. Save this value for the frontend configuration.
-
-### Step 3: Inject Required Secrets
-
-The live-streaming features require Agora RTC credentials.
-
-```bash
-aws secretsmanager create-secret \
-  --name bidit/agora/cert \
-  --secret-string '{"cert":"your-agora-app-certificate"}'
+```json
+{
+  "swagger": "2.0"
+}
 ```
 
 ---
 
-## Frontend Deployment (AWS Amplify)
+### 2. S3 CORS Configuration
 
-BidIt uses AWS Amplify for frontend hosting.
+Create `s3-cors-config.json`:
 
-### Step 1: Configure Environment Variables
+```json id="cors1"
+{
+  "CORSRules": [
+    {
+      "AllowedHeaders": ["*"],
+      "AllowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+      "AllowedOrigins": ["*"],
+      "ExposeHeaders": ["ETag"]
+    }
+  ]
+}
+```
 
-Update `frontend/.env`:
+---
 
-```env
+### 3. IAM Role Verification
+
+In AWS Console:
+
+* Go to **IAM → Roles**
+* Find your Lambda execution role (e.g. `BiditLambdaExecutionRole`)
+* Ensure it exists and has Lambda + DynamoDB + S3 permissions
+
+---
+
+## Step 2: Backend Deployment (Windows)
+
+Open **PowerShell in the project root**:
+
+```powershell id="deploy1"
+.\scripts\win\deploy-lambdas.ps1
+```
+
+### What this does:
+
+* Injects AWS Account ID into Swagger
+* Creates API Gateway (or updates it)
+* Deploys/updates all Lambda functions
+* Outputs your API Gateway ID
+
+### Output example:
+
+```text id="out1"
+API_ID=abc123xyz
+VITE_API_BASE_URL=https://abc123xyz.execute-api.us-east-1.amazonaws.com/dev
+```
+
+Save this URL.
+
+---
+
+## Step 3: Frontend Deployment
+
+### 1. Update environment file
+
+Edit:
+
+```text id="env1"
+frontend/.env
+```
+
+Add:
+
+```env id="env2"
 VITE_API_BASE_URL=https://<YOUR_API_ID>.execute-api.us-east-1.amazonaws.com/dev
 VITE_AGORA_APP_ID=your-agora-app-id
 ```
 
-### Step 2: Build and Deploy
+---
 
-Build the React frontend:
+### 2. Run frontend build
 
-```bash
-./scripts/build-frontend.sh
+```powershell id="build1"
+.\scripts\win\deploy-frontend.ps1
 ```
 
-Follow the generated instructions to upload the contents of `frontend/dist` to AWS Amplify.
+This generates:
+
+```text id="dist1"
+frontend/dist
+```
 
 ---
 
-## Verifying the Installation
+### 3. Deploy to AWS Amplify
 
-Run the smoke tests:
-
-```bash
-./scripts/smoke-tests.sh \
-https://<YOUR_API_ID>.execute-api.us-east-1.amazonaws.com/dev
-```
-
-If all tests return HTTP 200 responses, the deployment is operational.
+1. Open AWS Amplify Console
+2. Select **Deploy without Git provider**
+3. Name app: `BidIt-Frontend`
+4. Upload `frontend/dist`
+5. Click **Save and Deploy**
 
 ---
 
-## Notes
+## Step 4: Final Configuration (AWS Console)
 
-* S3 bucket names are generated dynamically using the AWS Account ID.
-* Lambda deployments are fully automated through the deployment scripts.
-* No manual DynamoDB table creation is required.
-* The frontend is hosted separately through AWS Amplify.
-* Agora credentials must be provided before video streaming functionality becomes available.
+### Agora Setup
+
+Go to Lambda:
+
+* `generateAgoraToken`
+* Add environment variables:
+
+```env id="agora1"
+AGORA_APP_ID=your-agora-app-id
+AGORA_APP_CERT=your-agora-app-certificate
+```
+
+---
+
+## Step 5: Smoke Testing
+
+Run backend verification:
+
+```powershell id="test1"
+.\scripts\win\smoke-tests.ps1 -API_URL "https://<YOUR_API_ID>.execute-api.us-east-1.amazonaws.com/dev"
+```
+
+---
+
+## Step 6: Success Criteria
+
+Deployment is successful if:
+
+* All Lambda functions return HTTP 200
+* API Gateway is reachable
+* DynamoDB tables are accessible
+* Frontend loads via Amplify URL
+* Image uploads work via S3
+* Authentication works via Firebase
+
+---
+
+## Troubleshooting
+
+### AWS CLI errors
+
+```powershell
+aws --version
+```
+
+If not found, reinstall AWS CLI and restart terminal.
+
+---
+
+### Lambda deployment fails
+
+* Check IAM role permissions
+* Check CloudWatch logs
+
+---
+
+### Frontend not loading
+
+* Verify `VITE_API_BASE_URL`
+* Rebuild frontend
+
+---
+
+## Related Docs
+
+* `docs/guides/SETUP.md`
+* `docs/ARCHITECTURE.md`
