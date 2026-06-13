@@ -117,3 +117,31 @@ npm run build
 cd frontend
 npm run preview
 ```
+
+## Technical Delivery and AWS Deployment Package
+
+This repository includes a scripted technical delivery package for recreating the AWS backend in a clean account:
+
+```text
+backend/lambdas/              Deployable Lambda source files
+backend/requirements.txt      Python dependencies for Lambda packaging and deployment tooling
+api/swagger_api_gateway.json  Swagger/API Gateway import definition
+scripts/                     boto3 deployment, packaging, API Gateway, Step Functions, and cleanup scripts
+docs/Technical_Installation_Guide.md
+.env.example                 Placeholder-only configuration template
+```
+
+For a complete clean-account installation, read `docs/Technical_Installation_Guide.md` first. The standard deployment flow is:
+
+```bash
+cp .env.example .env
+python -m venv .venv
+source .venv/bin/activate
+pip install -r backend/requirements.txt
+pip install -r scripts/requirements.txt
+python scripts/deploy_all.py
+```
+
+On Windows, activate the virtual environment with `.venv\Scripts\Activate.ps1` instead of `source .venv/bin/activate`.
+
+The deployment scripts create or verify DynamoDB tables, a private S3 image bucket, IAM roles and inline policies, Lambda functions, the Step Functions auction-closing workflow, and API Gateway routes imported from Swagger. Generated values are written to `dist/deployment_outputs.json`; use `api_invoke_url` as `VITE_API_BASE_URL` for the frontend.
