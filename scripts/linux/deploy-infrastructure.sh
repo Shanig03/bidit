@@ -13,6 +13,11 @@ AGORA_APP_CERT="${AGORA_APP_CERT:-}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ZIP_DIR="$ROOT_DIR/.deploy/lambda-zips"
 [[ -d "$ZIP_DIR" ]] || { echo "Missing $ZIP_DIR. Run scripts/linux/package-lambdas.sh first." >&2; exit 1; }
+command -v aws >/dev/null 2>&1 || { echo "ERROR: AWS CLI is not installed or not on PATH." >&2; exit 1; }
+if ! aws s3api head-bucket --bucket "$ARTIFACT_BUCKET" --region "$REGION" >/dev/null 2>&1; then
+  echo "ERROR: Artifact bucket '$ARTIFACT_BUCKET' does not exist or is not accessible in region '$REGION'. Create it or choose a bucket your credentials can access." >&2
+  exit 1
+fi
 aws s3 sync "$ZIP_DIR/" "s3://$ARTIFACT_BUCKET/$ARTIFACT_PREFIX/" --region "$REGION"
 aws cloudformation deploy \
   --template-file "$ROOT_DIR/cloudformation/bidit-infrastructure.yaml" \

@@ -13,7 +13,12 @@ for src in "$LAMBDA_DIR"/*.py; do
   mkdir -p "$work"
   cp "$src" "$work/"
   if [[ -f "$REQ_FILE" && "$name" == "generateAgoraToken" ]]; then
-    python3 -m pip install -r "$REQ_FILE" -t "$work" --quiet
+    echo "Installing Python dependencies for $name from $REQ_FILE"
+    if ! python3 -m pip install -r "$REQ_FILE" -t "$work" --quiet; then
+      echo "ERROR: Failed to install Python dependencies for $name." >&2
+      echo "Ensure this machine has internet/PyPI access, or preinstall/vendor dependencies before packaging (AWS Academy/VocLabs may block PyPI)." >&2
+      exit 1
+    fi
   fi
   (cd "$work" && zip -qr "$OUT_DIR/$name.zip" .)
   echo "Packaged $name.zip"

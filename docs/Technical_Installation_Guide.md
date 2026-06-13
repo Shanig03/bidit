@@ -5,7 +5,7 @@ This guide deploys BidIt backend infrastructure with CloudFormation for section 
 ## Prerequisites
 
 - AWS CLI v2 configured with credentials for the target account.
-- Python 3.11+ and `pip` for Lambda packaging.
+- Python 3.11+ and `pip` for Lambda packaging. Run packaging from a machine with internet/PyPI access because `generateAgoraToken` needs the Python dependency listed in `backend/requirements.txt`; AWS Academy/VocLabs networks may block PyPI.
 - `zip` on Linux/macOS or PowerShell `Compress-Archive` on Windows.
 - An existing S3 deployment/artifact bucket for Lambda zip uploads.
 - A globally unique S3 bucket name for BidIt auction/profile images.
@@ -66,7 +66,7 @@ scripts\win\deploy-infrastructure.ps1 `
 
 ## Deploy in AWS Academy using LabRole
 
-Find the LabRole ARN in IAM or CloudFormation lab outputs, then deploy with existing-role mode.
+Find the LabRole ARN in IAM or CloudFormation lab outputs, then deploy with existing-role mode. In many AWS Academy labs the ARN has the form `arn:aws:iam::<account-id>:role/LabRole`; copy the exact ARN from the lab account and provide it as `EXISTING_LAB_ROLE_ARN` on Linux/macOS or `-ExistingLabRoleArn` in PowerShell.
 
 Linux/macOS:
 
@@ -123,6 +123,7 @@ Optional production frontend deployment: run `npm run build`, then upload `front
 - **S3 bucket name already taken**: choose a different globally unique `ImagesBucketName`.
 - **CloudFormation rollback**: inspect stack events with `aws cloudformation describe-stack-events --stack-name bidit-dev`.
 - **Lambda zip not found**: run the package script, then ensure deploy script uploaded `.deploy/lambda-zips/*.zip` to the artifact bucket/prefix.
+- **PyPI access blocked during packaging**: package Lambdas from a machine with internet access, or pre-vendor the needed Python dependency in an approved environment before uploading artifacts. AWS Academy/VocLabs may block direct PyPI downloads.
 - **API Gateway CORS errors**: verify the browser is using the latest `ApiInvokeUrl`, redeploy the stack, and confirm the route has an `OPTIONS` method.
 - **Step Functions role errors**: in AWS Academy use `LabRole`; in regular accounts deploy with `CAPABILITY_NAMED_IAM`.
 - **DynamoDB table already exists**: delete or rename existing tables before deploying because the template intentionally uses the required fixed table names.
