@@ -1,0 +1,1329 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: BidIt CloudFormation infrastructure for DynamoDB, S3, Lambda, API Gateway, and Step Functions.
+
+Parameters:
+  StageName:
+    Type: String
+    Default: dev
+  LambdaArtifactBucket:
+    Type: String
+    Description: S3 bucket containing packaged Lambda zip files.
+  LambdaArtifactPrefix:
+    Type: String
+    Default: bidit-lambdas
+  ImagesBucketName:
+    Type: String
+    Description: Globally unique S3 bucket name for auction and profile images.
+  UseExistingLabRole:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+  ExistingLabRoleArn:
+    Type: String
+    Default: ""
+    Description: Existing IAM role ARN such as AWS Academy LabRole when UseExistingLabRole is true.
+  AgoraAppId:
+    Type: String
+    Default: ""
+    NoEcho: true
+  AgoraAppCertificate:
+    Type: String
+    Default: ""
+    NoEcho: true
+
+Conditions:
+  UseExistingRole: !Equals [!Ref UseExistingLabRole, "true"]
+  CreateRoles: !Not [!Condition UseExistingRole]
+
+Resources:
+  AuctionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Auctions
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: auctionId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: auctionId
+          KeyType: HASH
+  BidsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Bids
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: auctionId
+          AttributeType: S
+        - AttributeName: placedAt
+          AttributeType: S
+        - AttributeName: bidderId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: auctionId
+          KeyType: HASH
+        - AttributeName: placedAt
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: bidderId-placedAt-index
+          KeySchema:
+            - AttributeName: bidderId
+              KeyType: HASH
+            - AttributeName: placedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+  NotificationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Notifications
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: notificationId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: notificationId
+          KeyType: RANGE
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Users
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+  ImagesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref ImagesBucketName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins: ["*"]
+            AllowedMethods: [GET, PUT, POST, HEAD]
+            AllowedHeaders: ["*"]
+            ExposedHeaders: [ETag]
+            MaxAge: 3000
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Condition: CreateRoles
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: {Service: lambda.amazonaws.com}
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: BidItLambdaAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:DeleteItem, dynamodb:Query, dynamodb:Scan]
+                Resource:
+                  - !GetAtt AuctionsTable.Arn
+                  - !GetAtt BidsTable.Arn
+                  - !Sub "${BidsTable.Arn}/index/*"
+                  - !GetAtt NotificationsTable.Arn
+                  - !GetAtt UsersTable.Arn
+              - Effect: Allow
+                Action: [s3:GetObject, s3:PutObject]
+                Resource: !Sub "${ImagesBucket.Arn}/*"
+              - Effect: Allow
+                Action: states:StartExecution
+                Resource: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+  StepFunctionsRole:
+    Type: AWS::IAM::Role
+    Condition: CreateRoles
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: {Service: states.amazonaws.com}
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: BidItStepFunctionsInvokeLambda
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource:
+                  - !GetAtt CheckAuctionStatusFunction.Arn
+                  - !GetAtt ProcessAuctionWinnerFunction.Arn
+  CreateAuctionFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: createAuction
+      Runtime: python3.11
+      Handler: createAuction.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/createAuction.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  GetAllAuctionsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: getAllAuctions
+      Runtime: python3.11
+      Handler: getAllAuctions.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/getAllAuctions.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  GetAuctionFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: getAuction
+      Runtime: python3.11
+      Handler: getAuction.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/getAuction.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  UpdateAuctionFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: updateAuction
+      Runtime: python3.11
+      Handler: updateAuction.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/updateAuction.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  DeleteAuctionFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: deleteAuction
+      Runtime: python3.11
+      Handler: deleteAuction.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/deleteAuction.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  PlaceBidFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: placeBid
+      Runtime: python3.11
+      Handler: placeBid.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/placeBid.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  GetAuctionBidsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: getAuctionBids
+      Runtime: python3.11
+      Handler: getAuctionBids.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/getAuctionBids.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  GetUserBidsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: getUserBids
+      Runtime: python3.11
+      Handler: getUserBids.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/getUserBids.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  CreateUserFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: createUser
+      Runtime: python3.11
+      Handler: createUser.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/createUser.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  UpdateUserProfileFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: updateUserProfile
+      Runtime: python3.11
+      Handler: updateUserProfile.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/updateUserProfile.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  GetAllUsersFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: getAllUsers
+      Runtime: python3.11
+      Handler: getAllUsers.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/getAllUsers.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  UpdateUserStatusFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: updateUserStatus
+      Runtime: python3.11
+      Handler: updateUserStatus.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/updateUserStatus.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  UpdateUserRoleFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: updateUserRole
+      Runtime: python3.11
+      Handler: updateUserRole.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/updateUserRole.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  AddToFavoritesFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: addToFavorites
+      Runtime: python3.11
+      Handler: addToFavorites.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/addToFavorites.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  GetFavoritesFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: getFavorites
+      Runtime: python3.11
+      Handler: getFavorites.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/getFavorites.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  RemoveAuctionFromFavoritesFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: removeAuctionFromFavorites
+      Runtime: python3.11
+      Handler: removeAuctionFromFavorites.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/removeAuctionFromFavorites.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  GetNotificationsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: getNotifications
+      Runtime: python3.11
+      Handler: getNotifications.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/getNotifications.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  GenerateS3ImageUrlsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: generateS3ImageUrls
+      Runtime: python3.11
+      Handler: generateS3ImageUrls.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/generateS3ImageUrls.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  GenerateAgoraTokenFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: generateAgoraToken
+      Runtime: python3.11
+      Handler: generateAgoraToken.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/generateAgoraToken.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  CheckAuctionStatusFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: CheckAuctionStatus
+      Runtime: python3.11
+      Handler: CheckAuctionStatus.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/CheckAuctionStatus.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  ProcessAuctionWinnerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ProcessAuctionWinner
+      Runtime: python3.11
+      Handler: ProcessAuctionWinner.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/ProcessAuctionWinner.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+  GetLiveAuctionsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: getLiveAuctions
+      Runtime: python3.11
+      Handler: getLiveAuctions.lambda_handler
+      Role: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt LambdaExecutionRole.Arn]
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref LambdaArtifactBucket
+        S3Key: !Sub "${LambdaArtifactPrefix}/getLiveAuctions.zip"
+      Environment:
+        Variables:
+          AUCTIONS_TABLE_NAME: !Ref AuctionsTable
+          BIDS_TABLE_NAME: !Ref BidsTable
+          NOTIFICATIONS_TABLE_NAME: !Ref NotificationsTable
+          USERS_TABLE_NAME: !Ref UsersTable
+          IMAGES_BUCKET_NAME: !Ref ImagesBucket
+          STATE_MACHINE_ARN: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:WinnerMachine"
+          AGORA_APP_ID: !Ref AgoraAppId
+          AGORA_APP_CERT: !Ref AgoraAppCertificate
+
+  WinnerMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: WinnerMachine
+      RoleArn: !If [UseExistingRole, !Ref ExistingLabRoleArn, !GetAtt StepFunctionsRole.Arn]
+      DefinitionString: !Sub |
+        {
+          "StartAt": "CheckDynamoDB",
+          "States": {
+            "CheckDynamoDB": {"Type": "Task", "Resource": "${CheckAuctionStatusFunction.Arn}", "Next": "IsAuctionOver"},
+            "IsAuctionOver": {"Type": "Choice", "Choices": [{"Variable": "$.isAuctionOver", "BooleanEquals": true, "Next": "ProcessWinner"}], "Default": "SleepUntilEnd"},
+            "SleepUntilEnd": {"Type": "Wait", "TimestampPath": "$.endTime", "Next": "CheckDynamoDB"},
+            "ProcessWinner": {"Type": "Task", "Resource": "${ProcessAuctionWinnerFunction.Arn}", "End": true}
+          }
+        }
+  BidItRestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub "BidIt-${StageName}"
+      EndpointConfiguration: {Types: [REGIONAL]}
+      Body:
+        swagger: "2.0"
+        info:
+          title: !Sub "BidIt-${StageName}"
+          version: "1.0"
+        schemes: [https]
+        paths:
+          /admin/users:
+            get:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetAllUsersFunction.Arn}/invocations"
+            options:
+              responses:
+                "200":
+                  description: CORS support
+                  headers:
+                    Access-Control-Allow-Origin: {type: string}
+                    Access-Control-Allow-Methods: {type: string}
+                    Access-Control-Allow-Headers: {type: string}
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,PATCH,DELETE,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+          /admin/users/{userId}/status:
+            patch:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UpdateUserStatusFunction.Arn}/invocations"
+            options:
+              responses:
+                "200":
+                  description: CORS support
+                  headers:
+                    Access-Control-Allow-Origin: {type: string}
+                    Access-Control-Allow-Methods: {type: string}
+                    Access-Control-Allow-Headers: {type: string}
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,PATCH,DELETE,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+          /admin/users/{userId}/role:
+            patch:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UpdateUserRoleFunction.Arn}/invocations"
+            options:
+              responses:
+                "200":
+                  description: CORS support
+                  headers:
+                    Access-Control-Allow-Origin: {type: string}
+                    Access-Control-Allow-Methods: {type: string}
+                    Access-Control-Allow-Headers: {type: string}
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,PATCH,DELETE,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+          /admin/auctions/{auctionId}:
+            delete:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeleteAuctionFunction.Arn}/invocations"
+            options:
+              responses:
+                "200":
+                  description: CORS support
+                  headers:
+                    Access-Control-Allow-Origin: {type: string}
+                    Access-Control-Allow-Methods: {type: string}
+                    Access-Control-Allow-Headers: {type: string}
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,PATCH,DELETE,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+          /agora/token:
+            get:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GenerateAgoraTokenFunction.Arn}/invocations"
+            options:
+              responses:
+                "200":
+                  description: CORS support
+                  headers:
+                    Access-Control-Allow-Origin: {type: string}
+                    Access-Control-Allow-Methods: {type: string}
+                    Access-Control-Allow-Headers: {type: string}
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,PATCH,DELETE,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+          /auctions:
+            get:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetAllAuctionsFunction.Arn}/invocations"
+            post:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateAuctionFunction.Arn}/invocations"
+            options:
+              responses:
+                "200":
+                  description: CORS support
+                  headers:
+                    Access-Control-Allow-Origin: {type: string}
+                    Access-Control-Allow-Methods: {type: string}
+                    Access-Control-Allow-Headers: {type: string}
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,PATCH,DELETE,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+          /auctions/{auctionId}:
+            get:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetAuctionFunction.Arn}/invocations"
+            patch:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UpdateAuctionFunction.Arn}/invocations"
+            options:
+              responses:
+                "200":
+                  description: CORS support
+                  headers:
+                    Access-Control-Allow-Origin: {type: string}
+                    Access-Control-Allow-Methods: {type: string}
+                    Access-Control-Allow-Headers: {type: string}
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,PATCH,DELETE,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+          /auctions/{auctionId}/bid:
+            post:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PlaceBidFunction.Arn}/invocations"
+            options:
+              responses:
+                "200":
+                  description: CORS support
+                  headers:
+                    Access-Control-Allow-Origin: {type: string}
+                    Access-Control-Allow-Methods: {type: string}
+                    Access-Control-Allow-Headers: {type: string}
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,PATCH,DELETE,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+          /auctions/{auctionId}/bids:
+            get:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetAuctionBidsFunction.Arn}/invocations"
+            options:
+              responses:
+                "200":
+                  description: CORS support
+                  headers:
+                    Access-Control-Allow-Origin: {type: string}
+                    Access-Control-Allow-Methods: {type: string}
+                    Access-Control-Allow-Headers: {type: string}
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,PATCH,DELETE,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+          /upload-url:
+            post:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GenerateS3ImageUrlsFunction.Arn}/invocations"
+            options:
+              responses:
+                "200":
+                  description: CORS support
+                  headers:
+                    Access-Control-Allow-Origin: {type: string}
+                    Access-Control-Allow-Methods: {type: string}
+                    Access-Control-Allow-Headers: {type: string}
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,PATCH,DELETE,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+          /users:
+            post:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateUserFunction.Arn}/invocations"
+            options:
+              responses:
+                "200":
+                  description: CORS support
+                  headers:
+                    Access-Control-Allow-Origin: {type: string}
+                    Access-Control-Allow-Methods: {type: string}
+                    Access-Control-Allow-Headers: {type: string}
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,PATCH,DELETE,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+          /users/{userId}:
+            get:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UpdateUserProfileFunction.Arn}/invocations"
+            patch:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UpdateUserProfileFunction.Arn}/invocations"
+            options:
+              responses:
+                "200":
+                  description: CORS support
+                  headers:
+                    Access-Control-Allow-Origin: {type: string}
+                    Access-Control-Allow-Methods: {type: string}
+                    Access-Control-Allow-Headers: {type: string}
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,PATCH,DELETE,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+          /users/{userId}/bids:
+            get:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetUserBidsFunction.Arn}/invocations"
+            options:
+              responses:
+                "200":
+                  description: CORS support
+                  headers:
+                    Access-Control-Allow-Origin: {type: string}
+                    Access-Control-Allow-Methods: {type: string}
+                    Access-Control-Allow-Headers: {type: string}
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,PATCH,DELETE,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+          /users/{userId}/favorites:
+            get:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetFavoritesFunction.Arn}/invocations"
+            post:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AddToFavoritesFunction.Arn}/invocations"
+            options:
+              responses:
+                "200":
+                  description: CORS support
+                  headers:
+                    Access-Control-Allow-Origin: {type: string}
+                    Access-Control-Allow-Methods: {type: string}
+                    Access-Control-Allow-Headers: {type: string}
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,PATCH,DELETE,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+          /users/{userId}/favorites/{auctionId}:
+            delete:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RemoveAuctionFromFavoritesFunction.Arn}/invocations"
+            options:
+              responses:
+                "200":
+                  description: CORS support
+                  headers:
+                    Access-Control-Allow-Origin: {type: string}
+                    Access-Control-Allow-Methods: {type: string}
+                    Access-Control-Allow-Headers: {type: string}
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,PATCH,DELETE,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+          /users/{userId}/notifications:
+            get:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetNotificationsFunction.Arn}/invocations"
+            options:
+              responses:
+                "200":
+                  description: CORS support
+                  headers:
+                    Access-Control-Allow-Origin: {type: string}
+                    Access-Control-Allow-Methods: {type: string}
+                    Access-Control-Allow-Headers: {type: string}
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,PATCH,DELETE,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+          /live-auctions:
+            get:
+              responses: {}
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetLiveAuctionsFunction.Arn}/invocations"
+            options:
+              responses:
+                "200":
+                  description: CORS support
+                  headers:
+                    Access-Control-Allow-Origin: {type: string}
+                    Access-Control-Allow-Methods: {type: string}
+                    Access-Control-Allow-Headers: {type: string}
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,PATCH,DELETE,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+  BidItApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: BidItRestApi
+    Properties:
+      RestApiId: !Ref BidItRestApi
+      StageName: !Ref StageName
+  CreateAuctionFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref CreateAuctionFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  GetAllAuctionsFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GetAllAuctionsFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  GetAuctionFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GetAuctionFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  UpdateAuctionFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref UpdateAuctionFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  DeleteAuctionFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref DeleteAuctionFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  PlaceBidFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref PlaceBidFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  GetAuctionBidsFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GetAuctionBidsFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  GetUserBidsFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GetUserBidsFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  CreateUserFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref CreateUserFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  UpdateUserProfileFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref UpdateUserProfileFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  GetAllUsersFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GetAllUsersFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  UpdateUserStatusFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref UpdateUserStatusFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  UpdateUserRoleFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref UpdateUserRoleFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  AddToFavoritesFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref AddToFavoritesFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  GetFavoritesFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GetFavoritesFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  RemoveAuctionFromFavoritesFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref RemoveAuctionFromFavoritesFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  GetNotificationsFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GetNotificationsFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  GenerateS3ImageUrlsFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GenerateS3ImageUrlsFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  GenerateAgoraTokenFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GenerateAgoraTokenFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  CheckAuctionStatusFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref CheckAuctionStatusFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  ProcessAuctionWinnerFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ProcessAuctionWinnerFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  GetLiveAuctionsFunctionApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GetLiveAuctionsFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BidItRestApi}/*/*/*"
+  CheckAuctionStatusFunctionStepFunctionsPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref CheckAuctionStatusFunction
+      Principal: states.amazonaws.com
+      SourceArn: !Ref WinnerMachine
+  ProcessAuctionWinnerFunctionStepFunctionsPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ProcessAuctionWinnerFunction
+      Principal: states.amazonaws.com
+      SourceArn: !Ref WinnerMachine
+
+Outputs:
+  ApiInvokeUrl:
+    Description: API Gateway invoke URL.
+    Value: !Sub "https://${BidItRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/${StageName}"
+  ImagesBucket:
+    Value: !Ref ImagesBucket
+  WinnerMachineArn:
+    Value: !Ref WinnerMachine

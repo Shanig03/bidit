@@ -31,3 +31,10 @@ firebase-debug.log
 
 # Firebase config
 frontend/src/firebase/firebaseConfig.js
+# Deployment artifacts
+.deploy/
+*.zip
+*.pyc
+__pycache__/
+.venv/
+venv/

@@ -1,10 +1,11 @@
 import json
+import os
 import boto3
 import uuid
 
 s3 = boto3.client("s3")
 
-BUCKET_NAME = "bidit-auction-images-2026"
+BUCKET_NAME = os.environ.get("IMAGES_BUCKET_NAME", "")
 
 ALLOWED_CONTENT_TYPES = {
     "image/jpeg": "jpg",

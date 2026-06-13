@@ -1,4 +1,5 @@
 import json
+import os
 import uuid
 import boto3
 from datetime import datetime, timedelta, timezone
@@ -9,7 +10,7 @@ auctions_table = dynamodb.Table("Auctions")
 
 sfn_client = boto3.client("stepfunctions")
 
-STATE_MACHINE_ARN = "arn:aws:states:us-east-1:069765036595:stateMachine:WinnerMachine"
+STATE_MACHINE_ARN = os.environ.get("STATE_MACHINE_ARN", "")
 
 
 def response(status_code, body):
