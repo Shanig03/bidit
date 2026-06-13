@@ -15,6 +15,7 @@ function ProductImageUploader({
   const [isDragActive, setIsDragActive] = useState(false);
   const inputRef = useRef(null);
 
+  // UC-18: Validates selected product images before preview/upload.
   function validateAndSelect(files) {
     const fileList = Array.from(files || []);
 
@@ -70,6 +71,7 @@ function ProductImageUploader({
     setIsDragActive(false);
   }
 
+  // UC-18: Handles drag-and-drop image selection.
   function handleDrop(event) {
     event.preventDefault();
 
@@ -138,6 +140,7 @@ function ProductImageUploader({
         className="product-image-input"
       />
 
+      {/* UC-18: Shows previews of the selected auction images. */}
       {previewUrls.length > 0 && (
         <div className="product-image-preview-grid">
           {previewUrls.map((previewUrl, index) => (

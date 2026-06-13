@@ -32,6 +32,7 @@ export default function LiveAuctionsComp() {
     errorMessage
   } = useLiveAuctions();
 
+  // UC-07: Filters out ended auctions and sorts live auctions first.
   // 1. Filter out ENDED, then sort LIVE to the top
   const displayAuctions = filteredAuctions
     .filter((auction) => {
@@ -55,6 +56,7 @@ export default function LiveAuctionsComp() {
   return (
     <PageContainer className="live-page">
       <section className="live-hero card">
+        {/* UC-07: Displays the current live auction count. */}
         <StatusBadge tone="urgent">
           {liveAuctionsCount} Live {liveAuctionsCount === 1 ? 'Auction' : 'Auctions'}
         </StatusBadge>
@@ -66,6 +68,7 @@ export default function LiveAuctionsComp() {
         <p>Watch sellers showcase products on live video and place your bids in real-time</p>
       </section>
 
+      {/* UC-07: Search box and category chips filter the auction list. */}
       <section className="live-filter card">
         <div className="live-search-row">
           <input
@@ -104,6 +107,7 @@ export default function LiveAuctionsComp() {
         <p className="live-message">No live or upcoming auctions found.</p>
       )}
 
+      {/* UC-07: Renders the filtered auction cards. */}
       {/* 2. Map over your new displayAuctions array */}
       {!isLoading && !errorMessage && displayAuctions.length > 0 && (
         <section className="live-grid">

@@ -1,6 +1,7 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const adminApi = {
+  // UC-21: Backend request for the admin user list.
   fetchAllUsers: async (token) => {
     const response = await fetch(`${API_BASE_URL}/admin/users`, {
       headers: {
@@ -15,6 +16,7 @@ export const adminApi = {
     return response.json();
   },
 
+  // UC-21: Backend request that updates blocked/active status in DynamoDB.
   updateUserStatus: async (userId, status, token) => {
     if (!userId) {
       throw new Error('userId is required');
@@ -36,6 +38,7 @@ export const adminApi = {
     return response.json();
   },
 
+  // UC-21: Backend request that promotes a user role to admin.
   updateUserRole: async (userId, role, token) => {
     if (!userId) {
       throw new Error('userId is required');
@@ -57,6 +60,7 @@ export const adminApi = {
     return response.json();
   },
 
+  // UC-22: Backend request for auctions shown in admin management.
   fetchAllAuctions: async (token) => {
     const response = await fetch(`${API_BASE_URL}/auctions`, {
       headers: {
@@ -71,6 +75,7 @@ export const adminApi = {
     return response.json();
   },
 
+  // UC-22: Backend request that deletes an auction.
   deleteAuction: async (auctionId, token) => {
     if (!auctionId) {
       throw new Error('auctionId is required');

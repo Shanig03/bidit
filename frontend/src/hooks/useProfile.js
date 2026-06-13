@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getUserProfile, updateUserProfile } from '../api/usersApi';
+import {
+  getUserProfile,
+  updateUserProfile,
+  getUserNotifications,
+} from '../api/usersApi';
 import { uploadImage, getImageViewUrl } from '../api/uploadService';
 
 function getDisplayName(user) {
@@ -20,6 +24,7 @@ function getInitialProfile(user) {
     bio: 'No bio added yet.',
     photoURL: user?.photoURL || '',
     profileImageKey: '',
+    wonAuctions: [],
     imageFile: null,
   };
 }
@@ -36,14 +41,17 @@ export function useProfile() {
 
   const [profile, setProfile] = useState(() => getInitialProfile(user));
   const [formData, setFormData] = useState(() => getInitialProfile(user));
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
+    // UC-19/UC-20: Loads profile details, auctions won, and notifications.
     async function loadProfile() {
       if (!user?.uid) {
         const fallbackProfile = getInitialProfile(user);
 
         setProfile(fallbackProfile);
         setFormData(fallbackProfile);
+        setNotifications([]);
         setIsLoadingProfile(false);
         return;
       }
@@ -52,7 +60,12 @@ export function useProfile() {
         setIsLoadingProfile(true);
         setErrorMessage('');
 
-        const dbUser = await getUserProfile(user.uid);
+        // UC-20: Notifications are loaded for display only in this version.
+        const [dbUser, userNotifications] = await Promise.all([
+          getUserProfile(user.uid),
+          getUserNotifications(user.uid),
+        ]);
+
         const fallbackProfile = getInitialProfile(user);
 
         const profileImageKey = dbUser.profileImageKey || '';
@@ -74,12 +87,14 @@ export function useProfile() {
 
         setProfile(loadedProfile);
         setFormData(loadedProfile);
+        setNotifications(Array.isArray(userNotifications) ? userNotifications : []);
       } catch (error) {
         setErrorMessage(error.message || 'Failed to load profile.');
 
         const fallbackProfile = getInitialProfile(user);
         setProfile(fallbackProfile);
         setFormData(fallbackProfile);
+        setNotifications([]);
       } finally {
         setIsLoadingProfile(false);
       }
@@ -88,6 +103,7 @@ export function useProfile() {
     loadProfile();
   }, [user?.uid]);
 
+  // UC-19: Opens edit mode with the current profile values.
   function handleStartEdit() {
     setFormData(profile);
     setStatusMessage('');
@@ -111,6 +127,7 @@ export function useProfile() {
     }));
   }
 
+  // UC-19: Previews the selected profile image before saving.
   function handleImageChange(event) {
     const file = event.target.files?.[0];
 
@@ -136,6 +153,7 @@ export function useProfile() {
     }));
   }
 
+  // UC-19: Saves edited profile fields and optional image upload.
   async function handleSaveProfile(event) {
     event.preventDefault();
 
@@ -161,6 +179,7 @@ export function useProfile() {
       let photoURLToShow = formData.photoURL || '';
 
       if (formData.imageFile) {
+        // UC-19: Uploads the profile image to S3 and saves the returned key.
         const uploadedImageKey = await uploadImage({
           uploadType: 'profile',
           file: formData.imageFile,
@@ -176,14 +195,13 @@ export function useProfile() {
         email: profile.email,
         bio: cleanBio,
         profileImageKey: profileImageKeyToSave,
-        photoURL: '', 
+        photoURL: '',
       });
-      
 
       if (updateLocalUser) {
-        updateLocalUser({ 
-          displayName: cleanName, 
-          photoURL: photoURLToShow 
+        updateLocalUser({
+          displayName: cleanName,
+          photoURL: photoURLToShow,
         });
       }
 
@@ -193,6 +211,9 @@ export function useProfile() {
         bio: updatedProfile.bio || 'No bio added yet.',
         photoURL: photoURLToShow,
         profileImageKey: updatedProfile.profileImageKey || profileImageKeyToSave,
+        wonAuctions: Array.isArray(updatedProfile.wonAuctions)
+          ? updatedProfile.wonAuctions
+          : profile.wonAuctions || [],
         imageFile: null,
       };
 
@@ -210,6 +231,7 @@ export function useProfile() {
   return {
     user,
     profile,
+    notifications,
     formData,
     isEditing,
     isLoadingProfile,

@@ -1,5 +1,6 @@
 import './FavoriteButton.css';
 
+// UC-16: Favorite button shows saved state and triggers add/remove.
 function FavoriteButton({ active, disabled = false, onClick }) {
   return (
     <button

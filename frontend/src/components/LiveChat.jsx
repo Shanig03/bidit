@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   limitToLast,
   onValue,
@@ -8,7 +9,8 @@ import {
   ref,
   serverTimestamp,
 } from 'firebase/database';
-import { auth, realtimeDb } from '../firebase/firebaseConfig';
+import { realtimeDb } from '../firebase/firebaseConfig';
+import { useAuth } from '../context/AuthContext';
 import './LiveChat.css';
 
 function getDisplayName(user) {
@@ -45,16 +47,22 @@ function formatMessageTime(createdAt) {
 }
 
 function LiveChat({ auctionId }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [authMessage, setAuthMessage] = useState('');
+  const messagesListRef = useRef(null);
 
   useEffect(() => {
     if (!auctionId) {
       return undefined;
     }
 
+    // UC-11: Listens for the latest chat messages for this auction.
     const messagesRef = ref(realtimeDb, `auctionChats/${auctionId}/messages`);
     const messagesQuery = query(
       messagesRef,
@@ -87,8 +95,36 @@ function LiveChat({ auctionId }) {
     return () => unsubscribe();
   }, [auctionId]);
 
+  useEffect(() => {
+    const messagesList = messagesListRef.current;
+
+    if (!messagesList) {
+      return;
+    }
+
+    // UC-11: Auto-scrolls so the newest chat message stays visible.
+    messagesList.scrollTo({
+      top: messagesList.scrollHeight,
+      behavior: 'smooth',
+    });
+  }, [messages]);
+
+  function showAuthMessage() {
+    setAuthMessage('You must be logged in to perform this action.');
+  }
+
+  function goToLogin() {
+    navigate('/login', { state: { from: location } });
+  }
+
+  // UC-11: Validates and sends a new live chat message.
   async function handleSendMessage(event) {
     event.preventDefault();
+
+    if (!user) {
+      showAuthMessage();
+      return;
+    }
 
     const cleanText = messageText.trim();
 
@@ -110,14 +146,14 @@ function LiveChat({ auctionId }) {
       setIsSending(true);
       setErrorMessage('');
 
-      const currentUser = auth.currentUser;
       const messagesRef = ref(realtimeDb, `auctionChats/${auctionId}/messages`);
 
+      // UC-11: Saves the chat message to Firebase for everyone listening.
       await push(messagesRef, {
         auctionId,
-        userId: currentUser?.uid || 'guest-user',
-        userName: getDisplayName(currentUser),
-        userAvatarUrl: currentUser?.photoURL || '',
+        userId: user.uid,
+        userName: getDisplayName(user),
+        userAvatarUrl: user.photoURL || '',
         text: cleanText,
         createdAt: serverTimestamp(),
       });
@@ -137,7 +173,8 @@ function LiveChat({ auctionId }) {
         <span>{messages.length} messages</span>
       </div>
 
-      <ul className="live-chat__messages">
+      {/* UC-11: Renders the live chat message feed. */}
+      <ul className="live-chat__messages" ref={messagesListRef}>
         {messages.length === 0 && (
           <li className="live-chat__empty">No messages yet. Start the conversation.</li>
         )}
@@ -164,18 +201,28 @@ function LiveChat({ auctionId }) {
         ))}
       </ul>
 
+      {authMessage && (
+        <div className="live-chat__auth-notice" role="alert">
+          <p>{authMessage}</p>
+          <button type="button" onClick={goToLogin}>Log In</button>
+        </div>
+      )}
+
       {errorMessage && <p className="live-chat__error">{errorMessage}</p>}
 
+      {/* UC-11: Chat input for typing and submitting a message. */}
       <form className="chat-input" onSubmit={handleSendMessage}>
         <input
           type="text"
-          placeholder="Type a message..."
+          placeholder={user ? 'Type a message...' : 'Log in to join the chat'}
           value={messageText}
           onChange={(event) => setMessageText(event.target.value)}
+          onFocus={!user ? showAuthMessage : undefined}
+          readOnly={!user}
           maxLength={300}
         />
 
-        <button type="submit" disabled={isSending || !messageText.trim()}>
+        <button type="submit" disabled={isSending || (user && !messageText.trim())}>
           {isSending ? '...' : '➤'}
         </button>
       </form>

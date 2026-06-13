@@ -3,6 +3,7 @@ import Button from './Button';
 import { formatNumberWithCommas } from '../utils/numberFormat';
 import './DashboardBidItem.css';
 
+// UC-17: Displays one bid item with its current winning/outbid status.
 function DashboardBidItem({ item, imageVariant = 1 }) {
   const winning = item.status === 'winning' || item.status === 'leading';
   const auctionId = item.auctionId || item.id;

@@ -36,9 +36,11 @@ export function useTrendingAuctions() {
       try {
         setIsLoadingTrending(true);
 
+        // UC-06: Loads auctions from the backend before choosing trending items.
         const apiAuctions = await getAuctions();
         const mappedAuctions = apiAuctions.map(mapAuctionToHomeAuction);
 
+        // UC-06: Only live auctions are allowed in the trending section.
         const liveAuctions = mappedAuctions.filter(auction => auction.status === 'LIVE');
 
         // ZERO COST: Sort by the number of bids (or currentPrice) instead of Firebase viewers

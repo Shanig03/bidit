@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useImageViewUrl } from '../hooks/useImageViewUrl';
 import './ProductImageGallery.css';
 
+// UC-12: Renders each thumbnail in the product image gallery.
 function GalleryImage({ imageKey, index, onOpen }) {
   const { imageUrl, isLoadingImage } = useImageViewUrl(imageKey);
 
@@ -44,6 +45,7 @@ function GalleryModalImage({ imageKey }) {
 }
 
 export default function ProductImageGallery({ auction }) {
+  // UC-12: Builds the list of product image keys for the gallery.
   const imageKeys = useMemo(() => {
     const keysFromList = Array.isArray(auction?.imageKeys)
       ? auction.imageKeys.filter(Boolean)
@@ -64,14 +66,17 @@ export default function ProductImageGallery({ auction }) {
 
   const selectedImageKey = selectedIndex !== null ? imageKeys[selectedIndex] : null;
 
+  // UC-12: Opens the lightbox on the selected image.
   function openImage(index) {
     setSelectedIndex(index);
   }
 
+  // UC-12: Closes the product image lightbox.
   function closeImage() {
     setSelectedIndex(null);
   }
 
+  // UC-12: Moves the lightbox to the previous image.
   function showPreviousImage() {
     setSelectedIndex((currentIndex) => {
       if (currentIndex === null) return 0;
@@ -79,6 +84,7 @@ export default function ProductImageGallery({ auction }) {
     });
   }
 
+  // UC-12: Moves the lightbox to the next image.
   function showNextImage() {
     setSelectedIndex((currentIndex) => {
       if (currentIndex === null) return 0;

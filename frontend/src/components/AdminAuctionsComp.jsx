@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useImageViewUrl } from '../hooks/useImageViewUrl';
 import './AdminPanel.css';
 
 function formatPrice(value) {
@@ -37,10 +39,113 @@ function getStatusLabel(status) {
   return normalizedStatus;
 }
 
+function getMainImageKey(auction) {
+  if (auction?.imageKey) {
+    return auction.imageKey;
+  }
+
+  if (Array.isArray(auction?.imageKeys) && auction.imageKeys.length > 0) {
+    return auction.imageKeys[0];
+  }
+
+  return '';
+}
+
+// UC-22: One admin auction card with view and delete actions.
+function AdminAuctionCard({ auction, onDelete, onView }) {
+  const status = getStatusLabel(auction.status);
+  const displayPrice = auction.currentPrice ?? auction.startingPrice ?? 0;
+  const seller =
+    auction.sellerName ||
+    auction.sellerEmail ||
+    auction.sellerId ||
+    'Unknown Seller';
+
+  const mainImageKey = getMainImageKey(auction);
+  const imageResult = useImageViewUrl(mainImageKey);
+
+  const imageUrl =
+    typeof imageResult === 'string'
+      ? imageResult
+      : imageResult?.imageUrl || imageResult?.url || '';
+
+  return (
+    <article className="admin-live-auction-card">
+      <div className="admin-live-auction-card__image">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={auction.title || 'Auction item'}
+            className="admin-live-auction-card__photo"
+          />
+        ) : (
+          <div className="admin-live-auction-card__placeholder">
+          </div>
+        )}
+
+        <div className="admin-live-auction-card__top">
+          <span className={`admin-live-status ${status.toLowerCase()}`}>
+            {status}
+          </span>
+        </div>
+      </div>
+
+      <div className="admin-live-auction-card__body">
+        <p className="admin-live-auction-card__host">
+          Hosted by {seller}
+        </p>
+
+        <p className="admin-live-auction-card__category">
+          {auction.category || 'Other'}
+        </p>
+
+        <h3>{auction.title || 'Untitled Auction'}</h3>
+
+        <p className="admin-live-auction-card__desc">
+          {auction.description || 'No description provided.'}
+        </p>
+
+        <div className="admin-live-auction-card__meta">
+          <div>
+            <span>Current Price</span>
+            <strong>{formatPrice(displayPrice)}</strong>
+          </div>
+
+          <div>
+            <span>Ends At</span>
+            <strong>{formatDateTime(auction.endsAt)}</strong>
+          </div>
+        </div>
+
+        <div className="admin-live-card-actions">
+          <button
+            type="button"
+            className="admin-live-view-btn"
+            onClick={() => onView(auction.auctionId)}
+          >
+            View Auction
+          </button>
+
+          <button
+            type="button"
+            className="admin-live-delete-btn"
+            onClick={() => onDelete(auction.auctionId)}
+          >
+            Delete Auction
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 export default function AdminAuctionsComp({ auctions = [], onDelete }) {
+  const navigate = useNavigate();
+
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // UC-22: Filters auctions by the searched title prefix.
   const filteredAuctions = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
@@ -54,9 +159,16 @@ export default function AdminAuctionsComp({ auctions = [], onDelete }) {
     });
   }, [auctions, searchTerm]);
 
+  // UC-22: Applies the admin auction search term.
   function handleSearch(event) {
     event.preventDefault();
     setSearchTerm(searchInput);
+  }
+
+  // UC-22: Opens the selected auction page from admin.
+  function handleViewAuction(auctionId) {
+    if (!auctionId) return;
+    navigate(`/auction/${auctionId}`);
   }
 
   if (auctions.length === 0) {
@@ -104,63 +216,14 @@ export default function AdminAuctionsComp({ auctions = [], onDelete }) {
         <p className="admin-inline-message">No auctions match your search.</p>
       ) : (
         <section className="admin-auctions-live-grid">
-          {filteredAuctions.map((auction) => {
-            const status = getStatusLabel(auction.status);
-            const displayPrice = auction.currentPrice ?? auction.startingPrice ?? 0;
-            const seller =
-              auction.sellerName ||
-              auction.sellerEmail ||
-              auction.sellerId ||
-              'Unknown Seller';
-
-            return (
-              <article key={auction.auctionId} className="admin-live-auction-card">
-                <div className="admin-live-auction-card__image">
-                  <div className="admin-live-auction-card__top">
-                    <span className={`admin-live-status ${status.toLowerCase()}`}>
-                      {status}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="admin-live-auction-card__body">
-                  <p className="admin-live-auction-card__host">
-                    Hosted by {seller}
-                  </p>
-
-                  <p className="admin-live-auction-card__category">
-                    {auction.category || 'Other'}
-                  </p>
-
-                  <h3>{auction.title || 'Untitled Auction'}</h3>
-
-                  <p className="admin-live-auction-card__desc">
-                    {auction.description || 'No description provided.'}
-                  </p>
-
-                  <div className="admin-live-auction-card__meta">
-                    <div>
-                      <span>Current Price</span>
-                      <strong>{formatPrice(displayPrice)}</strong>
-                    </div>
-
-                    <div>
-                      <span>Ends At</span>
-                      <strong>{formatDateTime(auction.endsAt)}</strong>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    className="admin-live-delete-btn"
-                    onClick={() => onDelete(auction.auctionId)}
-                  >
-                    Delete Auction
-                  </button>
-                </div>
-              </article>
-            );
-          })}
+          {filteredAuctions.map((auction) => (
+            <AdminAuctionCard
+              key={auction.auctionId}
+              auction={auction}
+              onDelete={onDelete}
+              onView={handleViewAuction}
+            />
+          ))}
         </section>
       )}
     </section>

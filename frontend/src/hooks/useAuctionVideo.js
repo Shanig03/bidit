@@ -1,56 +1,115 @@
-
 import { useState, useEffect } from 'react';
-import {
-  useJoin,
-  useLocalCameraTrack,
-  useLocalMicrophoneTrack,
-  usePublish,
-  useRemoteUsers
-} from 'agora-rtc-react';
+import AgoraRTC from 'agora-rtc-sdk-ng'; 
+import { useRTCClient, useRemoteUsers } from 'agora-rtc-react';
+import { getAgoraToken } from '../api/agoraApi'; // 1. Import your new API function
 
 export function useAuctionVideo(auction, currentUserId) {
+  const client = useRTCClient(); 
   const [isJoined, setIsJoined] = useState(false);
   const [videoProfile, setVideoProfile] = useState("720p_1");
+  const [localCameraTrack, setLocalCameraTrack] = useState(null);
+  const [localMicrophoneTrack, setLocalMicrophoneTrack] = useState(null);
 
+  // UC-08/UC-10: Decides whether this user is the host or a viewer.
   const isHost = auction?.sellerId === currentUserId; 
-
-  const { localCameraTrack } = useLocalCameraTrack(isHost && isJoined);
-  const { localMicrophoneTrack } = useLocalMicrophoneTrack(isHost && isJoined);
-
-  // Video encoder configuration effect
-  useEffect(() => {
-    if (localCameraTrack) {
-      localCameraTrack.setEncoderConfiguration({
-        profile: videoProfile,
-        frameRate: 30, 
-        bitrateMin: 600,
-        bitrateMax: videoProfile === "1080p_1" ? 3000 : 1500, 
-      })
-      .then(() => {
-        console.log(`Video encoder successfully optimized for: ${videoProfile}`);
-      })
-      .catch((error) => {
-        console.error("Failed to update video encoder configuration:", error);
-      });
-    }
-  }, [localCameraTrack, videoProfile]);
-
-  useJoin({
-    appid: 'YOUR_AGORA_APP_ID', 
-    channel: auction?.agoraChannelName || `auction-${auction?.id}`,
-    token: null, 
-  }, isJoined);
-
-  usePublish([localMicrophoneTrack, localCameraTrack], isJoined && isHost);
-
   const remoteUsers = useRemoteUsers();
-  const hostUser = remoteUsers.find((user) => user.hasVideo || user.hasAudio);
+  const hostUser = remoteUsers.length > 0 ? remoteUsers[0] : null;
 
-  // Cleanup on unmount
   useEffect(() => {
-    return () => setIsJoined(false);
-  }, []);
+    let ignore = false;
+    let camTrack = null;
+    let micTrack = null;
+    let hasJoined = false;
 
+    async function initStream() {
+      if (!isJoined) return;
+
+      try {
+        const uid = Math.floor(Math.random() * 50000) + 1;
+
+        // 2. Dynamically set the channel name based on the current auction
+        const channelName = auction?.agoraChannelName || auction?.id || auction?.auctionId;
+        
+        if (!channelName) {
+          console.error("Stream connection failed: No channel name available.");
+          return;
+        }
+
+        if (ignore) return;
+
+        // 3. Fetch the secure token from your AWS Lambda
+        const token = await getAgoraToken(channelName, uid, isHost);
+
+        if (ignore) return;
+        
+        // 4. Get your App ID from your environment variables
+        const appId = import.meta.env.VITE_AGORA_APP_ID;
+
+        // UC-08/UC-10: Joins the Agora auction channel before publishing or watching video.
+        await client.join(appId, channelName, token, uid);
+        hasJoined = true;
+
+        if (ignore) {
+          await client.leave();
+          hasJoined = false;
+          return;
+        }
+
+        // UC-08: Host creates microphone/camera tracks and publishes the live broadcast.
+        if (isHost) {
+          micTrack = await AgoraRTC.createMicrophoneAudioTrack();
+          if (ignore) { micTrack.stop(); micTrack.close(); return; }
+
+          // UC-08: Uses the selected stream quality when creating the camera track.
+          camTrack = await AgoraRTC.createCameraVideoTrack({ encoderConfig: videoProfile });
+          if (ignore) { 
+            micTrack.stop(); micTrack.close(); 
+            camTrack.stop(); camTrack.close(); 
+            return; 
+          }
+
+          setLocalMicrophoneTrack(micTrack);
+          setLocalCameraTrack(camTrack);
+
+          await client.publish([micTrack, camTrack]);
+          
+          if (ignore) {
+            await client.unpublish([micTrack, camTrack]);
+            micTrack.stop(); micTrack.close();
+            camTrack.stop(); camTrack.close();
+            setLocalMicrophoneTrack(null);
+            setLocalCameraTrack(null);
+          }
+        }
+      } catch (err) {
+        console.error("Agora Stream Engine Failure:", err);
+        if (camTrack) { camTrack.stop(); camTrack.close(); setLocalCameraTrack(null); }
+        if (micTrack) { micTrack.stop(); micTrack.close(); setLocalMicrophoneTrack(null); }
+        if (hasJoined) { try { await client.leave(); } catch (e) {} }
+      }
+    }
+
+    initStream();
+
+    return () => {
+      ignore = true;
+      if (camTrack) {
+        camTrack.stop();
+        camTrack.close();
+        setLocalCameraTrack(null);
+      }
+      if (micTrack) {
+        micTrack.stop();
+        micTrack.close();
+        setLocalMicrophoneTrack(null);
+      }
+      if (hasJoined) {
+        client.leave().catch(() => {});
+      }
+    };
+  }, [isJoined, client, isHost, videoProfile, auction]); // Make sure auction is in the dependency array
+
+  // UC-10: Remote users come from Agora and are used to show the host stream.
   return {
     isJoined,
     setIsJoined,

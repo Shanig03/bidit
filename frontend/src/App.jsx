@@ -1,7 +1,5 @@
 import { BrowserRouter, Route, Routes, Outlet, Navigate } from 'react-router-dom';
 
-
-
 import AgoraRTC from "agora-rtc-sdk-ng"; 
 import { AgoraRTCProvider } from "agora-rtc-react";
 import Navbar from './components/Navbar';
@@ -19,18 +17,25 @@ import { useAuth } from './context/AuthContext';
 import { USER_ROLES } from '../constants/authConstants';
 import AdminUsersPage from './pages/AdminUsersPage';
 import AdminAuctionsPage from './pages/AdminAuctionsPage';
+import ProtectedRoute from './components/ProtectedRoute';
 
-// This will now execute perfectly without throwing an undefined error!
 const agoraEngineClient = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
 
 function AdminRoute({ children }) {
   const { user, loading } = useAuth();
-  
+
   if (loading) return <div>Loading...</div>;
-  if (!user || user.role !== USER_ROLES.ADMIN) {
-    return <Navigate to="/" replace />; // Kick non-admins back to the home page
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
   }
-  
+
+  const role = user.role?.toUpperCase();
+
+  if (role !== USER_ROLES.ADMIN) {
+    return <Navigate to="/" replace />;
+  }
+
   return children;
 }
 
@@ -50,12 +55,17 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/auctions" element={<LiveAuctionsPage />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+        </Route>
 
         <Route element={<AgoraLayout />}>
           <Route path="/auction/:id" element={<AuctionDetailsPage />} />
-          <Route path="/go-live" element={<GoLivePage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/go-live" element={<GoLivePage />} />
+          </Route>
         </Route>
 
         <Route 

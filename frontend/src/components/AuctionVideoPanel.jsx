@@ -23,6 +23,7 @@ function AuctionVideoPanel({ auction, currentUserId, liveViewers }) {
         
         {isJoined ? (
           <div className="avp-video-wrapper">
+            {/* UC-08/UC-10: Shows host preview or viewer's subscribed host stream. */}
             {isHost ? (
               <LocalUser
                 cameraOn={true}
@@ -41,6 +42,7 @@ function AuctionVideoPanel({ auction, currentUserId, liveViewers }) {
           </div>
         ) : (
           <div className="avp-connect-overlay">
+            {/* UC-08/UC-10: Host starts broadcasting, while viewers connect to watch. */}
             <button 
               type="button" 
               className="avp-connect-btn" 
@@ -61,7 +63,9 @@ function AuctionVideoPanel({ auction, currentUserId, liveViewers }) {
           </span>
         </div>
 
+        {/* --- ACTIONS TOOLBAR --- */}
         <div className="avp-actions" style={{ zIndex: 12 }}>
+          {/* UC-08: Host can pick the broadcast video quality. */}
           {isHost && (
             <select 
               className="avp-res-dropdown"
@@ -73,8 +77,35 @@ function AuctionVideoPanel({ auction, currentUserId, liveViewers }) {
               <option value="1080p_1">1080p High-Def</option>
             </select>
           )}
-          <button type="button">🔊</button>
-          <button type="button">⛶</button>
+
+          {/* ADDED: End Stream Button displays only when the host is actively streaming */}
+          {/* UC-08: Ends the host broadcast by leaving the joined stream state. */}
+          {isHost && isJoined && (
+            <button 
+              type="button" 
+              className="avp-end-btn"
+              onClick={() => setIsJoined(false)}
+              style={{
+                backgroundColor: '#ff3b3b',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 12px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                marginRight: '8px',
+                fontSize: '0.85rem',
+                transition: 'background 0.2s'
+              }}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#d32f2f'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#ff3b3b'}
+            >
+              🛑 End Stream
+            </button>
+          )}
+
+          {/* <button type="button">🔊</button>
+          <button type="button">⛶</button> */}
         </div>
 
         <div className="avp-seller" style={{ zIndex: 12 }}>

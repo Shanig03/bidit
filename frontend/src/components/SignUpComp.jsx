@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useSignup } from "../hooks/useSignup";
 import PageContainer from './PageContainer';
 import Button from './Button';
 import './SignUpComp.css';
 
-export default function SignUpComp({ onSubmit, error, loading }) {
+export default function SignUpComp() {
+  const { executeSignup, executeGoogleSignup, error, loading } = useSignup();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,9 +21,7 @@ export default function SignUpComp({ onSubmit, error, loading }) {
       return setLocalError('Passwords do not match');
     }
 
-    // Pass user details up to the smart container
-    // (Firebase auth handles email/pass natively, but you can save the username to Firestore later)
-    onSubmit(email, password, username);
+    executeSignup(email, password, username);
   };
 
   return (
@@ -96,6 +96,20 @@ export default function SignUpComp({ onSubmit, error, loading }) {
           <Button type="submit" className="signup-submit" disabled={loading}>
             {loading ? 'Creating...' : 'Create Account'}
           </Button>
+
+          <div className="login-separator" style={{ textAlign: 'center', margin: '20px 0' }}>
+            <span>OR</span>
+          </div>
+
+          <button
+            className="login-google"
+            type="button"
+            onClick={executeGoogleSignup}
+            disabled={loading}
+            style={{ width: '100%', padding: '10px', cursor: 'pointer' }}
+          >
+            <span>G</span> Continue with Google
+          </button>
 
           <p className="signup-login">
             Already have an account? <Link to="/login">Log in</Link>

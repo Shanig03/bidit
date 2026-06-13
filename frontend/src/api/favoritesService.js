@@ -8,6 +8,7 @@ function normalizeFavoritesResponse(data) {
   return data.favorites || data.items || data.favoriteAuctions || data.auctions || [];
 }
 
+// UC-16/UC-17: Reads favorite auction records from the users API.
 export async function getFavoriteAuctions(userId) {
   const response = await fetch(`${API_BASE_URL}/users/${userId}/favorites`);
   const data = await response.json();
@@ -27,6 +28,7 @@ export async function getFavoriteAuctions(userId) {
   }));
 }
 
+// UC-16: Sends the request that creates a favorite record in DynamoDB.
 export async function addFavoriteAuction(userId, auction) {
   const auctionId = auction.auctionId || auction.id;
 
@@ -50,6 +52,7 @@ export async function addFavoriteAuction(userId, auction) {
   return getFavoriteAuctions(userId);
 }
 
+// UC-16: Sends the request that removes a favorite record from DynamoDB.
 export async function removeFavoriteAuction(userId, auctionId) {
   const response = await fetch(`${API_BASE_URL}/users/${userId}/favorites/${auctionId}`, {
     method: 'DELETE',
@@ -64,6 +67,7 @@ export async function removeFavoriteAuction(userId, auctionId) {
   return getFavoriteAuctions(userId);
 }
 
+// UC-16: Chooses add or remove based on the current favorite state.
 export async function toggleFavoriteAuction(userId, auction) {
   const favorites = await getFavoriteAuctions(userId);
   const auctionId = auction.auctionId || auction.id;

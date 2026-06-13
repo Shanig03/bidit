@@ -7,6 +7,7 @@ import { useLogout } from '../hooks/useLogOut';
 import { USER_ROLES } from '../../constants/authConstants';
 
 
+// UC-23: Regular users see normal app navigation links.
 const standardNavItems = [
   { label: 'Home', to: '/' },
   { label: 'Live Auctions', to: '/auctions' },
@@ -14,6 +15,7 @@ const standardNavItems = [
   { label: 'Dashboard', to: '/dashboard' },
 ];
 
+// UC-23: Admin users see management links instead of regular user pages.
 const adminNavItems = [
   { label: 'Manage Auctions', to: '/admin/auctions' },
   { label: 'Manage Users', to: '/admin/users' },
@@ -26,6 +28,7 @@ function Navbar() {
   const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
   const isAdmin = user?.role === USER_ROLES.ADMIN;
 
+  // UC-23: Chooses the navbar based on the user's role.
   const currentNavItems = isAdmin ? adminNavItems : standardNavItems
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
@@ -50,6 +53,7 @@ function Navbar() {
         </div>
 
         <div className="navbar__actions">
+          {/* UC-23: Unauthenticated users only see login and signup actions. */}
           {!user ? (
             <>
               <Link to="/login">
