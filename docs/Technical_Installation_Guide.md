@@ -20,6 +20,13 @@ AWS Academy often supplies a pre-created `LabRole` and may block creating IAM ro
 
 If `lambda:AddPermission` is blocked, API Gateway invoke permissions may need to be added manually in the Lambda console or by an instructor-provided role with sufficient permissions.
 
+## Connect to AWS
+```
+  aws configure
+```
+region: us-east-1
+format: json
+
 ## Package Lambdas
 
 Linux/macOS:
